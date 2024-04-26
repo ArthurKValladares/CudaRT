@@ -6,6 +6,9 @@
 #include "ray.h"
 #include "math.h"
 
+#define SDL_MAIN_HANDLED
+#include "SDL.h"
+
 #define checkCudaErrors(val) check_cuda( (val), #val, __FILE__, __LINE__ )
 void check_cuda(cudaError_t result, char const* const func, const char* const file, int const line) {
     if (result) {
@@ -39,6 +42,23 @@ int main() {
     int ny = 600;
     int tx = 8;
     int ty = 8;
+
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        printf("SDL could not be initialized!\n"
+            "SDL_Error: %s\n",
+            SDL_GetError());
+        return 0;
+    }
+
+    SDL_Window* window = SDL_CreateWindow(
+        "Basic C SDL project", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+        nx, ny, SDL_WINDOW_SHOWN);
+    if (!window) {
+        printf("Window could not be created!\n"
+            "SDL_Error: %s\n",
+            SDL_GetError());
+        return 0;
+    }
 
     std::cerr << "Rendering a " << nx << "x" << ny << " image ";
     std::cerr << "in " << tx << "x" << ty << " blocks.\n";
@@ -86,4 +106,6 @@ int main() {
     std::cerr << "took " << timer_seconds << " seconds.\n";
 
     checkCudaErrors(cudaFree(fb));
+
+    return 0;
 }
