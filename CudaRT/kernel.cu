@@ -59,6 +59,18 @@ int main() {
             SDL_GetError());
         return 0;
     }
+    SDL_Surface* surface = SDL_CreateRGBSurface(0, nx, ny, 32,
+        0x00FF0000,
+        0x0000FF00,
+        0x000000FF,
+        0xFF000000
+    );
+    if (!surface) {
+        printf("Surface could not be created!\n"
+            "SDL_Error: %s\n",
+            SDL_GetError());
+        return 0;
+    }
 
     std::cerr << "Rendering a " << nx << "x" << ny << " image ";
     std::cerr << "in " << tx << "x" << ty << " blocks.\n";
