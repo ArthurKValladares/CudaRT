@@ -71,6 +71,8 @@ int main() {
             SDL_GetError());
         return 0;
     }
+    Uint32* surface_buffer;
+    checkCudaErrors(cudaMalloc((void**)&surface_buffer, nx * ny * sizeof(Uint32)));
 
     std::cerr << "Rendering a " << nx << "x" << ny << " image ";
     std::cerr << "in " << tx << "x" << ty << " blocks.\n";
@@ -118,6 +120,42 @@ int main() {
     std::cerr << "took " << timer_seconds << " seconds.\n";
 
     checkCudaErrors(cudaFree(fb));
+
+    bool quit = false;
+    while (!quit) {
+        SDL_Event e;
+        while (SDL_PollEvent(&e)) {
+            switch (e.type) {
+                case SDL_KEYDOWN: {
+                    switch (e.key.keysym.sym) {
+                        case SDLK_ESCAPE: {
+                            quit = true;
+                            break;
+                        }
+                        default: {
+                            break;
+                        }
+                    }
+                    break;
+                }
+                case SDL_QUIT: {
+                    quit = true;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+        }
+
+        SDL_LockSurface(surface);
+
+        // TODO: Render
+
+        SDL_UnlockSurface(surface);
+        SDL_UpdateWindowSurface(window);
+    }
+    checkCudaErrors(cudaFree(surface_buffer));
 
     return 0;
 }
