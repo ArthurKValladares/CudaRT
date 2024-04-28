@@ -45,7 +45,7 @@ __device__ Uint32 sdl_color(const ray& r) {
     const Uint8 G = lerp(1.0, 0.7, t) * 255.;
     const Uint8 B = lerp(1.0, 1.0, t) * 255.;
 
-    return (0xFF << 24) | (R << 16) | (G << 8) | (B);
+    return 0xFFFF00FF/*(0xFF << 24) | (R << 16) | (G << 8) | (B)*/;
 }
 
 __global__ void sdl_render(Uint32* fb, int max_x, int max_y, vec3 lower_left_corner, vec3 horizontal, vec3 vertical, vec3 origin) {
@@ -102,6 +102,8 @@ int main() {
             SDL_GetError());
         return 0;
     }
+    SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
+
     Uint32* surface_buffer;
     checkCudaErrors(cudaMalloc((void**)&surface_buffer, surface_buffer_size));
 
@@ -152,9 +154,19 @@ int main() {
             std::cerr << "took " << timer_seconds << " seconds.\n";
         }
         SDL_UnlockSurface(surface);
+
+        if (SDL_BlitScaled(surface, nullptr, SDL_GetWindowSurface(window), nullptr))
+        {
+            printf("SDL_BlitScaled %s", SDL_GetError());
+            exit(1);
+        }
+
         SDL_UpdateWindowSurface(window);
     }
     checkCudaErrors(cudaFree(surface_buffer));
+
+    SDL_DestroyWindow(window);
+    SDL_Quit();
 
     return 0;
 }
