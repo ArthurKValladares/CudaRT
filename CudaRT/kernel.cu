@@ -20,32 +20,17 @@ void check_cuda(cudaError_t result, char const* const func, const char* const fi
     }
 }
 
-__device__ vec3 color(const ray& r) {
-    const vec3 unit_direction = unit_vector(r.direction());
-    const float t = 0.5f * (unit_direction.y() + 1.0f);
-    return lerp(vec3(1.0, 1.0, 1.0), vec3(0.5, 0.7, 1.0), t);
-}
-
-__global__ void render(vec3* fb, int max_x, int max_y, vec3 lower_left_corner, vec3 horizontal, vec3 vertical, vec3 origin) {
-    int i = threadIdx.x + blockIdx.x * blockDim.x;
-    int j = threadIdx.y + blockIdx.y * blockDim.y;
-    if ((i >= max_x) || (j >= max_y)) return;
-    int pixel_index = j * max_x + i;
-    float u = float(i) / float(max_x);
-    float v = float(j) / float(max_y);
-    ray r(origin, lower_left_corner + u * horizontal + v * vertical);
-    fb[pixel_index] = color(r);
-}
-
 __device__ Uint32 sdl_color(const ray& r) {
     const vec3 unit_direction = unit_vector(r.direction());
     const float t = 0.5f * (unit_direction.y() + 1.0f);
 
-    const Uint8 R = lerp(1.0, 0.5, t) * 255.;
-    const Uint8 G = lerp(1.0, 0.7, t) * 255.;
-    const Uint8 B = lerp(1.0, 1.0, t) * 255.;
+    const vec3 rgb_vec = lerp(vec3(0.5, 0.7, 1.0), vec3(1.0, 1.0, 1.0), t) * 255.99;
 
-    return 0xFFFF00FF/*(0xFF << 24) | (R << 16) | (G << 8) | (B)*/;
+    const Uint8 R = rgb_vec.r();
+    const Uint8 G = rgb_vec.g();
+    const Uint8 B = rgb_vec.b();
+
+    return (0xFF << 24) | (R << 16) | (G << 8) | (B);
 }
 
 __global__ void sdl_render(Uint32* fb, int max_x, int max_y, vec3 lower_left_corner, vec3 horizontal, vec3 vertical, vec3 origin) {
