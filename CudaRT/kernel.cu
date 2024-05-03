@@ -29,7 +29,7 @@ __device__ bool hit_sphere(const vec3& center, float radius, const ray& r) {
     return (discriminant > 0.0f);
 }
 
-__device__ Uint32 sdl_color(const ray& r) {
+__device__ Uint32 color(const ray& r) {
     if (hit_sphere(vec3(0, 0, -1), 0.5, r)) {
         return (0xFF << 24) | (0xFF << 16) | (0x00 << 8) | (0x00);
     }
@@ -47,7 +47,7 @@ __device__ Uint32 sdl_color(const ray& r) {
     }
 }
 
-__global__ void sdl_render(Uint32* fb, int max_x, int max_y, vec3 lower_left_corner, vec3 horizontal, vec3 vertical, vec3 origin) {
+__global__ void render(Uint32* fb, int max_x, int max_y, vec3 lower_left_corner, vec3 horizontal, vec3 vertical, vec3 origin) {
     int i = threadIdx.x + blockIdx.x * blockDim.x;
     int j = threadIdx.y + blockIdx.y * blockDim.y;
     if ((i >= max_x) || (j >= max_y)) return;
@@ -55,7 +55,7 @@ __global__ void sdl_render(Uint32* fb, int max_x, int max_y, vec3 lower_left_cor
     float u = float(i) / float(max_x);
     float v = float(j) / float(max_y);
     ray r(origin, lower_left_corner + u * horizontal + v * vertical);
-    fb[pixel_index] = sdl_color(r);
+    fb[pixel_index] = color(r);
 }
 
 int main() {
@@ -137,7 +137,7 @@ int main() {
         {
             start = clock();
 
-            sdl_render << <blocks, threads >> > (
+            render << <blocks, threads >> > (
                 surface_buffer, nx, ny,
                 vec3(-2.0, -1.0, -1.0),
                 vec3(4.0, 0.0, 0.0),
