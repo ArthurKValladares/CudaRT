@@ -20,31 +20,41 @@ void check_cuda(cudaError_t result, char const* const func, const char* const fi
     }
 }
 
-__device__ bool hit_sphere(const vec3& center, float radius, const ray& r) {
-    vec3 oc = r.origin() - center;
-    float a = dot(r.direction(), r.direction());
-    float b = 2.0f * dot(oc, r.direction());
-    float c = dot(oc, oc) - radius * radius;
-    float discriminant = b * b - 4.0f * a * c;
-    return (discriminant > 0.0f);
+__device__ float hit_sphere(const vec3& center, float radius, const ray& r) {
+    vec3 oc = center - r.origin();
+    auto a = r.direction().squared_length();
+    auto h = dot(r.direction(), oc);
+    auto c = oc.squared_length() - radius * radius;
+    auto discriminant = h * h - a * c;
+
+    if (discriminant < 0) {
+        return -1.0;
+    }
+    else {
+        return (h - sqrt(discriminant)) / a;
+    }
 }
 
 __device__ Uint32 color(const ray& r) {
-    if (hit_sphere(vec3(0, 0, -1), 0.5, r)) {
-        return (0xFF << 24) | (0xFF << 16) | (0x00 << 8) | (0x00);
+    vec3 ret_color;
+
+    auto t = hit_sphere(vec3(0, 0, -1), 0.5, r);
+    if (t > 0.0) {
+        vec3 N = unit_vector(r.at(t) - vec3(0, 0, -1));
+        ret_color = (0.5 * vec3(N.x() + 1, N.y() + 1, N.z() + 1)) * 255.99;
     }
     else {
         const vec3 unit_direction = unit_vector(r.direction());
         const float t = 0.5f * (unit_direction.y() + 1.0f);
 
-        const vec3 rgb_vec = lerp(vec3(0.5, 0.7, 1.0), vec3(1.0, 1.0, 1.0), t) * 255.99;
-
-        const Uint8 R = rgb_vec.r();
-        const Uint8 G = rgb_vec.g();
-        const Uint8 B = rgb_vec.b();
-
-        return (0xFF << 24) | (R << 16) | (G << 8) | (B);
+        ret_color = lerp(vec3(0.5, 0.7, 1.0), vec3(1.0, 1.0, 1.0), t) * 255.99;
     }
+
+    const Uint8 R = ret_color.r();
+    const Uint8 G = ret_color.g();
+    const Uint8 B = ret_color.b();
+
+    return (0xFF << 24) | (R << 16) | (G << 8) | (B);
 }
 
 __global__ void render(Uint32* fb, int max_x, int max_y, vec3 lower_left_corner, vec3 horizontal, vec3 vertical, vec3 origin) {
