@@ -71,8 +71,8 @@ __global__ void render(Uint32* fb, int max_x, int max_y, vec3 lower_left_corner,
 int main() {
     clock_t start, stop;
 
-    int nx = 1200;
-    int ny = 600;
+    int nx = 2400;
+    int ny = 1200;
     int tx = 8;
     int ty = 8;
 
