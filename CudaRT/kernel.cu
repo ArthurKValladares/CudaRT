@@ -20,17 +20,31 @@ void check_cuda(cudaError_t result, char const* const func, const char* const fi
     }
 }
 
+__device__ bool hit_sphere(const vec3& center, float radius, const ray& r) {
+    vec3 oc = r.origin() - center;
+    float a = dot(r.direction(), r.direction());
+    float b = 2.0f * dot(oc, r.direction());
+    float c = dot(oc, oc) - radius * radius;
+    float discriminant = b * b - 4.0f * a * c;
+    return (discriminant > 0.0f);
+}
+
 __device__ Uint32 sdl_color(const ray& r) {
-    const vec3 unit_direction = unit_vector(r.direction());
-    const float t = 0.5f * (unit_direction.y() + 1.0f);
+    if (hit_sphere(vec3(0, 0, -1), 0.5, r)) {
+        return (0xFF << 24) | (0xFF << 16) | (0x00 << 8) | (0x00);
+    }
+    else {
+        const vec3 unit_direction = unit_vector(r.direction());
+        const float t = 0.5f * (unit_direction.y() + 1.0f);
 
-    const vec3 rgb_vec = lerp(vec3(0.5, 0.7, 1.0), vec3(1.0, 1.0, 1.0), t) * 255.99;
+        const vec3 rgb_vec = lerp(vec3(0.5, 0.7, 1.0), vec3(1.0, 1.0, 1.0), t) * 255.99;
 
-    const Uint8 R = rgb_vec.r();
-    const Uint8 G = rgb_vec.g();
-    const Uint8 B = rgb_vec.b();
+        const Uint8 R = rgb_vec.r();
+        const Uint8 G = rgb_vec.g();
+        const Uint8 B = rgb_vec.b();
 
-    return (0xFF << 24) | (R << 16) | (G << 8) | (B);
+        return (0xFF << 24) | (R << 16) | (G << 8) | (B);
+    }
 }
 
 __global__ void sdl_render(Uint32* fb, int max_x, int max_y, vec3 lower_left_corner, vec3 horizontal, vec3 vertical, vec3 origin) {
