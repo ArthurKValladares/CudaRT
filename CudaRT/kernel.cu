@@ -5,6 +5,7 @@
 #include "vec3.h"
 #include "ray.h"
 #include "math.h"
+#include "sphere.h"
 
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
@@ -20,27 +21,15 @@ void check_cuda(cudaError_t result, char const* const func, const char* const fi
     }
 }
 
-__device__ float hit_sphere(const vec3& center, float radius, const ray& r) {
-    vec3 oc = center - r.origin();
-    auto a = r.direction().squared_length();
-    auto h = dot(r.direction(), oc);
-    auto c = oc.squared_length() - radius * radius;
-    auto discriminant = h * h - a * c;
+__device__ Uint32 color(Sphere** spheres, int sphere_count, const ray& r) {
+    // TODO: For now hard-coded for 1 sphere
+    const Sphere* sphere = *(spheres);
 
-    if (discriminant < 0) {
-        return -1.0;
-    }
-    else {
-        return (h - sqrt(discriminant)) / a;
-    }
-}
-
-__device__ Uint32 color(const ray& r) {
     vec3 ret_color;
 
-    auto t = hit_sphere(vec3(0, 0, -1), 0.5, r);
-    if (t > 0.0) {
-        vec3 N = unit_vector(r.at(t) - vec3(0, 0, -1));
+    hit_record hr;
+    if (sphere->hit(r, 0.0, 1.0, hr)) {
+        vec3 N = unit_vector(r.at(hr.t) - vec3(0, 0, -1));
         ret_color = (0.5 * vec3(N.x() + 1, N.y() + 1, N.z() + 1)) * 255.99;
     }
     else {
@@ -57,7 +46,7 @@ __device__ Uint32 color(const ray& r) {
     return (0xFF << 24) | (R << 16) | (G << 8) | (B);
 }
 
-__global__ void render(Uint32* fb, int max_x, int max_y, vec3 lower_left_corner, vec3 horizontal, vec3 vertical, vec3 origin) {
+__global__ void render(Sphere** spheres, int sphere_count, Uint32* fb, int max_x, int max_y, vec3 lower_left_corner, vec3 horizontal, vec3 vertical, vec3 origin) {
     int i = threadIdx.x + blockIdx.x * blockDim.x;
     int j = threadIdx.y + blockIdx.y * blockDim.y;
     if ((i >= max_x) || (j >= max_y)) return;
@@ -65,7 +54,17 @@ __global__ void render(Uint32* fb, int max_x, int max_y, vec3 lower_left_corner,
     float u = float(i) / float(max_x);
     float v = float(j) / float(max_y);
     ray r(origin, lower_left_corner + u * horizontal + v * vertical);
-    fb[pixel_index] = color(r);
+    fb[pixel_index] = color(spheres, sphere_count, r);
+}
+
+__global__ void create_world(Sphere** spheres) {
+    if (threadIdx.x == 0 && blockIdx.x == 0) {
+        *(spheres) = new Sphere(vec3(0, 0, -1), 0.5);
+    }
+}
+
+__global__ void free_world(Sphere** spheres) {
+    delete* (spheres);
 }
 
 int main() {
@@ -114,7 +113,13 @@ int main() {
     SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
 
     Uint32* surface_buffer;
-    checkCudaErrors(cudaMalloc((void**)&surface_buffer, surface_buffer_size));
+    checkCudaErrors(cudaMalloc(&surface_buffer, surface_buffer_size));
+
+    // TODO: Better create/free_world functions
+    const int sphere_count = 1;
+    Sphere** spheres;
+    checkCudaErrors(cudaMalloc(&spheres, sphere_count * sizeof(Sphere*)));
+    create_world << <1, 1 >> > (spheres);
 
     bool quit = false;
     while (!quit) {
@@ -148,6 +153,7 @@ int main() {
             start = clock();
 
             render << <blocks, threads >> > (
+                spheres, 1,
                 surface_buffer, nx, ny,
                 vec3(-2.0, -1.0, -1.0),
                 vec3(4.0, 0.0, 0.0),
@@ -172,7 +178,12 @@ int main() {
 
         SDL_UpdateWindowSurface(window);
     }
+
+    // Cleanup
+    checkCudaErrors(cudaDeviceSynchronize());
+    free_world << <1, 1 >> > (spheres);
     checkCudaErrors(cudaFree(surface_buffer));
+    checkCudaErrors(cudaFree(spheres));
 
     SDL_DestroyWindow(window);
     SDL_Quit();

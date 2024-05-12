@@ -162,8 +162,10 @@ C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\include\texture_types.h
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\include\vector_functions.h
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\include\vector_functions.hpp
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\include\vector_types.h
+C:\Users\Arthur\Documents\projects\cudart\CudaRT\hittable.h
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\math.h
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\ray.h
+C:\Users\Arthur\Documents\projects\cudart\CudaRT\sphere.h
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\vec3.h
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\vendor\SDL\include\begin_code.h
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\vendor\SDL\include\close_code.h
