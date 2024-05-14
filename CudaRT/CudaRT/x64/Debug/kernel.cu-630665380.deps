@@ -165,6 +165,7 @@ C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\include\vector_function
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\include\vector_types.h
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\defs.h
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\hittable.h
+C:\Users\Arthur\Documents\projects\cudart\CudaRT\hittable_list.h
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\math.h
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\ray.h
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\sphere.h

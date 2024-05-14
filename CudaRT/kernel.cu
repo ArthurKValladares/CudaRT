@@ -7,18 +7,16 @@
 #include "ray.h"
 #include "math.h"
 #include "sphere.h"
+#include "hittable_list.h"
 
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
 
-__device__ Uint32 color(Sphere** spheres, int sphere_count, const ray& r) {
-    // TODO: For now hard-coded for 1 sphere
-    const Sphere* sphere = *(spheres);
-
+__device__ Uint32 color(hittable_list** hittables, const ray& r) {
     vec3 ret_color;
 
     hit_record hr;
-    if (sphere->hit(r, 0.0, 1.0, hr)) {
+    if ((*hittables)->hit(r, 0.0, FLOAT_MAX, hr)) {
         vec3 N = unit_vector(r.at(hr.t) - vec3(0, 0, -1));
         ret_color = (0.5 * vec3(N.x() + 1, N.y() + 1, N.z() + 1)) * 255.99;
     }
@@ -36,7 +34,7 @@ __device__ Uint32 color(Sphere** spheres, int sphere_count, const ray& r) {
     return (0xFF << 24) | (R << 16) | (G << 8) | (B);
 }
 
-__global__ void render(Sphere** spheres, int sphere_count, Uint32* fb, int max_x, int max_y, vec3 lower_left_corner, vec3 horizontal, vec3 vertical, vec3 origin) {
+__global__ void render(hittable_list** hittables, Uint32* fb, int max_x, int max_y, vec3 lower_left_corner, vec3 horizontal, vec3 vertical, vec3 origin) {
     int i = threadIdx.x + blockIdx.x * blockDim.x;
     int j = threadIdx.y + blockIdx.y * blockDim.y;
     if ((i >= max_x) || (j >= max_y)) return;
@@ -44,17 +42,21 @@ __global__ void render(Sphere** spheres, int sphere_count, Uint32* fb, int max_x
     float u = float(i) / float(max_x);
     float v = float(j) / float(max_y);
     ray r(origin, lower_left_corner + u * horizontal + v * vertical);
-    fb[pixel_index] = color(spheres, sphere_count, r);
+    fb[pixel_index] = color(hittables, r);
 }
 
-__global__ void create_world(Sphere** spheres) {
+__global__ void create_world(Sphere** spheres, int num_hittables, hittable_list** hittables) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
         *(spheres) = new Sphere(vec3(0, 0, -1), 0.5);
+        *(spheres+1) = new Sphere(vec3(0, -100.5, -1), 100);
+        *hittables = new hittable_list(spheres, num_hittables);
     }
 }
 
-__global__ void free_world(Sphere** spheres) {
+__global__ void free_world(Sphere** spheres, hittable_list** hittables) {
     delete* (spheres);
+    delete* (spheres+1);
+    delete* hittables;
 }
 
 int main() {
@@ -106,10 +108,12 @@ int main() {
     checkCudaErrors(cudaMalloc(&surface_buffer, surface_buffer_size));
 
     // TODO: Better create/free_world functions
-    const int sphere_count = 1;
+    const int sphere_count = 2;
     Sphere** spheres;
     checkCudaErrors(cudaMalloc(&spheres, sphere_count * sizeof(Sphere*)));
-    create_world << <1, 1 >> > (spheres);
+    hittable_list** hittables;
+    checkCudaErrors(cudaMalloc(&hittables, sizeof(hittable_list*)));
+    create_world << <1, 1 >> > (spheres, sphere_count, hittables);
 
     bool quit = false;
     while (!quit) {
@@ -143,7 +147,7 @@ int main() {
             start = clock();
 
             render << <blocks, threads >> > (
-                spheres, 1,
+                hittables,
                 surface_buffer, nx, ny,
                 vec3(-2.0, -1.0, -1.0),
                 vec3(4.0, 0.0, 0.0),
@@ -171,7 +175,7 @@ int main() {
 
     // Cleanup
     checkCudaErrors(cudaDeviceSynchronize());
-    free_world << <1, 1 >> > (spheres);
+    free_world << <1, 1 >> > (spheres, hittables);
     checkCudaErrors(cudaFree(surface_buffer));
     checkCudaErrors(cudaFree(spheres));
 

@@ -86,13 +86,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <CudaCompile Include="defs.cu" />
-    <CudaCompile Include="hittable.cu" />
     <CudaCompile Include="kernel.cu" />
-    <CudaCompile Include="math.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="defs.h" />
     <ClInclude Include="hittable.h" />
+    <ClInclude Include="hittable_list.h" />
     <ClInclude Include="math.h" />
     <ClInclude Include="ray.h" />
     <ClInclude Include="sphere.h" />

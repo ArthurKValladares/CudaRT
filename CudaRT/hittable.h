@@ -21,20 +21,3 @@ public:
 		normal = front_face ? outward_normal : -outward_normal;
 	}
 };
-
-// TODO: More than  just sphere
-class Sphere;
-class hittable_list {
-public:
-	__device__ hittable_list(int size)
-		: list_size(size)
-	{
-		checkCudaErrors(cudaMalloc(&hittables, list_size * sizeof(Sphere*)));
-	}
-
-	__device__ virtual bool hit(const ray& r, float tmin, float tmax, hit_record& rec) const;
-
-private:
-	Sphere** hittables;
-	int list_size;
-};
