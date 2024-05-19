@@ -18,14 +18,15 @@ __device__ Uint32 color(hittable_list** hittables, const ray& r) {
     hit_record hr;
     if ((*hittables)->hit(r, 0.0, FLOAT_MAX, hr)) {
         vec3 N = unit_vector(r.at(hr.t) - vec3(0, 0, -1));
-        ret_color = (0.5 * vec3(N.x() + 1, N.y() + 1, N.z() + 1)) * 255.99;
+        ret_color = 0.5 * vec3(N.x() + 1., N.y() + 1., N.z() + 1.);
     }
     else {
         const vec3 unit_direction = unit_vector(r.direction());
         const float t = 0.5f * (unit_direction.y() + 1.0f);
 
-        ret_color = lerp(vec3(0.5, 0.7, 1.0), vec3(1.0, 1.0, 1.0), t) * 255.99;
+        ret_color = lerp(vec3(1.0, 1.0, 1.0), vec3(0.5, 0.7, 1.0), t);
     }
+    ret_color *= 255.99;
 
     const Uint8 R = ret_color.r();
     const Uint8 G = ret_color.g();
