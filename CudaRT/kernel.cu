@@ -17,7 +17,7 @@ __device__ Uint32 color(hittable_list** hittables, const ray& r) {
 
     hit_record hr;
     if ((*hittables)->hit(r, 0.0, FLOAT_MAX, hr)) {
-        vec3 N = unit_vector(r.at(hr.t) - vec3(0, 0, -1));
+        vec3 N = hr.normal;
         ret_color = 0.5 * vec3(N.x() + 1., N.y() + 1., N.z() + 1.);
     }
     else {
@@ -39,7 +39,8 @@ __global__ void render(hittable_list** hittables, Uint32* fb, int max_x, int max
     int i = threadIdx.x + blockIdx.x * blockDim.x;
     int j = threadIdx.y + blockIdx.y * blockDim.y;
     if ((i >= max_x) || (j >= max_y)) return;
-    int pixel_index = j * max_x + i;
+    int flipped_j = max_y - 1 - j;
+    int pixel_index = flipped_j * max_x + i;
     float u = float(i) / float(max_x);
     float v = float(j) / float(max_y);
     ray r(origin, lower_left_corner + u * horizontal + v * vertical);
