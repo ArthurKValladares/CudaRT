@@ -2,6 +2,8 @@
 #include <time.h>
 #include <fstream>
 
+#include <curand_kernel.h>
+
 #include "defs.h"
 #include "vec3.h"
 #include "ray.h"
@@ -12,7 +14,7 @@
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
 
-__device__ Uint32 color(hittable_list** hittables, const ray& r) {
+__device__ vec3 color(hittable_list** hittables, const ray& r) {
     vec3 ret_color;
 
     hit_record hr;
@@ -26,25 +28,46 @@ __device__ Uint32 color(hittable_list** hittables, const ray& r) {
 
         ret_color = lerp(vec3(1.0, 1.0, 1.0), vec3(0.5, 0.7, 1.0), t);
     }
-    ret_color *= 255.99;
+    
+    return ret_color;
+}
 
-    const Uint8 R = ret_color.r();
-    const Uint8 G = ret_color.g();
-    const Uint8 B = ret_color.b();
+__device__ Uint32 vec3_to_color(vec3 color) {
+    color *= 255.99;
+
+    const Uint8 R = color.r();
+    const Uint8 G = color.g();
+    const Uint8 B = color.b();
 
     return (0xFF << 24) | (R << 16) | (G << 8) | (B);
 }
 
-__global__ void render(hittable_list** hittables, Uint32* fb, int max_x, int max_y, vec3 lower_left_corner, vec3 horizontal, vec3 vertical, vec3 origin) {
+__global__ void render_init(int max_x, int max_y, curandState* rand_state) {
+    const int i = threadIdx.x + blockIdx.x * blockDim.x;
+    const int j = threadIdx.y + blockIdx.y * blockDim.y;
+    if ((i >= max_x) || (j >= max_y)) return;
+    const int pixel_index = j * max_x + i;
+    const unsigned long long seed = 1984;
+    const unsigned long long offset = 0;
+    curand_init(seed, pixel_index, offset, &rand_state[pixel_index]);
+}
+
+__global__ void render(hittable_list** hittables, curandState* rand_state, int ns, Uint32* fb, int max_x, int max_y, vec3 lower_left_corner, vec3 horizontal, vec3 vertical, vec3 origin) {
     int i = threadIdx.x + blockIdx.x * blockDim.x;
     int j = threadIdx.y + blockIdx.y * blockDim.y;
     if ((i >= max_x) || (j >= max_y)) return;
     int flipped_j = max_y - 1 - j;
     int pixel_index = flipped_j * max_x + i;
-    float u = float(i) / float(max_x);
-    float v = float(j) / float(max_y);
-    ray r(origin, lower_left_corner + u * horizontal + v * vertical);
-    fb[pixel_index] = color(hittables, r);
+    curandState local_rand_state = rand_state[pixel_index];
+    vec3 col;
+    for (int s = 0; s < ns; s++) {
+        // TODO: camera class
+        float u = float(i + curand_uniform(&local_rand_state)) / float(max_x);
+        float v = float(j + curand_uniform(&local_rand_state)) / float(max_y);
+        ray r(origin, lower_left_corner + u * horizontal + v * vertical);
+        col += color(hittables, r);
+    }
+    fb[pixel_index] = vec3_to_color(col / float(ns));
 }
 
 __global__ void create_world(Sphere** spheres, int num_hittables, hittable_list** hittables) {
@@ -66,6 +89,7 @@ int main() {
 
     int nx = 2400;
     int ny = 1200;
+    int ns = 100;
     int tx = 8;
     int ty = 8;
 
@@ -109,6 +133,13 @@ int main() {
     Uint32* surface_buffer;
     checkCudaErrors(cudaMalloc(&surface_buffer, surface_buffer_size));
 
+    curandState* d_rand_state;
+    checkCudaErrors(cudaMalloc((void**)&d_rand_state, num_pixels * sizeof(curandState)));
+
+    render_init << <blocks, threads >> > (nx, ny, d_rand_state);
+    checkCudaErrors(cudaGetLastError());
+    checkCudaErrors(cudaDeviceSynchronize());
+
     // TODO: Better create/free_world functions
     const int sphere_count = 2;
     Sphere** spheres;
@@ -150,6 +181,7 @@ int main() {
 
             render << <blocks, threads >> > (
                 hittables,
+                d_rand_state, ns,
                 surface_buffer, nx, ny,
                 vec3(-2.0, -1.0, -1.0),
                 vec3(4.0, 0.0, 0.0),
