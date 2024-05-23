@@ -10,6 +10,7 @@
 #include "math.h"
 #include "sphere.h"
 #include "hittable_list.h"
+#include "camera.h"
 
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
@@ -46,42 +47,45 @@ __global__ void render_init(int max_x, int max_y, curandState* rand_state) {
     const int i = threadIdx.x + blockIdx.x * blockDim.x;
     const int j = threadIdx.y + blockIdx.y * blockDim.y;
     if ((i >= max_x) || (j >= max_y)) return;
-    const int pixel_index = j * max_x + i;
+    int flipped_j = max_y - 1 - j;
+    int pixel_index = flipped_j * max_x + i;
     const unsigned long long seed = 1984;
     const unsigned long long offset = 0;
     curand_init(seed, pixel_index, offset, &rand_state[pixel_index]);
 }
 
-__global__ void render(hittable_list** hittables, curandState* rand_state, int ns, Uint32* fb, int max_x, int max_y, vec3 lower_left_corner, vec3 horizontal, vec3 vertical, vec3 origin) {
+__global__ void render(hittable_list** hittables, curandState* rand_state, int ns, Uint32* fb, int max_x, int max_y, camera** cam) {
     int i = threadIdx.x + blockIdx.x * blockDim.x;
     int j = threadIdx.y + blockIdx.y * blockDim.y;
     if ((i >= max_x) || (j >= max_y)) return;
     int flipped_j = max_y - 1 - j;
     int pixel_index = flipped_j * max_x + i;
-    curandState local_rand_state = rand_state[pixel_index];
-    vec3 col;
+    curandState& local_rand_state = rand_state[pixel_index];
+    vec3 col(0., 0., 0.);
     for (int s = 0; s < ns; s++) {
         // TODO: camera class
         float u = float(i + curand_uniform(&local_rand_state)) / float(max_x);
         float v = float(j + curand_uniform(&local_rand_state)) / float(max_y);
-        ray r(origin, lower_left_corner + u * horizontal + v * vertical);
+        ray r = (*cam)->get_ray(u, v);
         col += color(hittables, r);
     }
     fb[pixel_index] = vec3_to_color(col / float(ns));
 }
 
-__global__ void create_world(Sphere** spheres, int num_hittables, hittable_list** hittables) {
+__global__ void create_world(Sphere** spheres, int num_hittables, hittable_list** hittables, camera** d_camera) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
         *(spheres) = new Sphere(vec3(0, 0, -1), 0.5);
         *(spheres+1) = new Sphere(vec3(0, -100.5, -1), 100);
         *hittables = new hittable_list(spheres, num_hittables);
+        *d_camera = new camera();
     }
 }
 
-__global__ void free_world(Sphere** spheres, hittable_list** hittables) {
+__global__ void free_world(Sphere** spheres, hittable_list** hittables, camera** d_camera) {
     delete* (spheres);
     delete* (spheres+1);
     delete* hittables;
+    delete* d_camera;
 }
 
 int main() {
@@ -89,7 +93,7 @@ int main() {
 
     int nx = 2400;
     int ny = 1200;
-    int ns = 100;
+    int ns = 50;
     int tx = 8;
     int ty = 8;
 
@@ -146,7 +150,10 @@ int main() {
     checkCudaErrors(cudaMalloc(&spheres, sphere_count * sizeof(Sphere*)));
     hittable_list** hittables;
     checkCudaErrors(cudaMalloc(&hittables, sizeof(hittable_list*)));
-    create_world << <1, 1 >> > (spheres, sphere_count, hittables);
+    camera** d_camera;
+    checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(camera*)));
+
+    create_world << <1, 1 >> > (spheres, sphere_count, hittables, d_camera);
 
     bool quit = false;
     while (!quit) {
@@ -183,11 +190,8 @@ int main() {
                 hittables,
                 d_rand_state, ns,
                 surface_buffer, nx, ny,
-                vec3(-2.0, -1.0, -1.0),
-                vec3(4.0, 0.0, 0.0),
-                vec3(0.0, 2.0, 0.0),
-                vec3(0.0, 0.0, 0.0)
-                );
+                d_camera
+            );
             checkCudaErrors(cudaGetLastError());
             checkCudaErrors(cudaDeviceSynchronize());
             checkCudaErrors(cudaMemcpy(surface->pixels, surface_buffer, surface_buffer_size, cudaMemcpyDeviceToHost));
@@ -209,7 +213,7 @@ int main() {
 
     // Cleanup
     checkCudaErrors(cudaDeviceSynchronize());
-    free_world << <1, 1 >> > (spheres, hittables);
+    free_world << <1, 1 >> > (spheres, hittables, d_camera);
     checkCudaErrors(cudaFree(surface_buffer));
     checkCudaErrors(cudaFree(spheres));
 
