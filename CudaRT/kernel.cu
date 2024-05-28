@@ -15,22 +15,26 @@
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
 
-__device__ vec3 color(hittable_list** hittables, const ray& r) {
-    vec3 ret_color;
+#define MAX_BOUNCE_DEPTH 50
 
-    hit_record hr;
-    if ((*hittables)->hit(r, 0.0, FLOAT_MAX, hr)) {
-        vec3 N = hr.normal;
-        ret_color = 0.5 * vec3(N.x() + 1., N.y() + 1., N.z() + 1.);
+__device__ vec3 color(curandState& local_rand_state, hittable_list** hittables, const ray& r) {
+    ray cur_ray = r;
+    float cur_attenuation = 1.0f;
+    for (int i = 0; i < 50; i++) {
+        hit_record rec;
+        if ((*hittables)->hit(cur_ray, 0.001f, FLT_MAX, rec)) {
+            vec3 target = rec.p + rec.normal + random_in_unit_sphere(local_rand_state);
+            cur_attenuation *= 0.5f;
+            cur_ray = ray(rec.p, target - rec.p);
+        }
+        else {
+            vec3 unit_direction = unit_vector(cur_ray.direction());
+            float t = 0.5f * (unit_direction.y() + 1.0f);
+            vec3 c = (1.0f - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
+            return cur_attenuation * c;
+        }
     }
-    else {
-        const vec3 unit_direction = unit_vector(r.direction());
-        const float t = 0.5f * (unit_direction.y() + 1.0f);
-
-        ret_color = lerp(vec3(1.0, 1.0, 1.0), vec3(0.5, 0.7, 1.0), t);
-    }
-    
-    return ret_color;
+    return vec3(0.0, 0.0, 0.0); // exceeded recursion
 }
 
 __device__ Uint32 vec3_to_color(vec3 color) {
@@ -61,14 +65,15 @@ __global__ void render(hittable_list** hittables, curandState* rand_state, int n
     int flipped_j = max_y - 1 - j;
     int pixel_index = flipped_j * max_x + i;
     curandState& local_rand_state = rand_state[pixel_index];
+
     vec3 col(0., 0., 0.);
     for (int s = 0; s < ns; s++) {
-        // TODO: camera class
-        float u = float(i + curand_uniform(&local_rand_state)) / float(max_x);
-        float v = float(j + curand_uniform(&local_rand_state)) / float(max_y);
+        float u = float(i + random_float(local_rand_state)) / float(max_x);
+        float v = float(j + random_float(local_rand_state)) / float(max_y);
         ray r = (*cam)->get_ray(u, v);
-        col += color(hittables, r);
+        col += color(local_rand_state, hittables, r);
     }
+
     fb[pixel_index] = vec3_to_color(col / float(ns));
 }
 
@@ -91,9 +96,9 @@ __global__ void free_world(Sphere** spheres, hittable_list** hittables, camera**
 int main() {
     clock_t start, stop;
 
-    int nx = 2400;
-    int ny = 1200;
-    int ns = 50;
+    int nx = 2400 / 2;
+    int ny = 1200 / 2;
+    int ns = 50 / 5;
     int tx = 8;
     int ty = 8;
 
