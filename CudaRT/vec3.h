@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <iostream>
 
+#include "math.h"
+
 class vec3 {
 
 
@@ -138,4 +140,13 @@ __host__ __device__ inline vec3& vec3::operator/=(const float t) {
 
 __host__ __device__ inline vec3 unit_vector(vec3 v) {
     return v / v.length();
+}
+
+// TODO: Make these host as well, need a host random_float function
+__device__ vec3 random_vec(curandState& rand_state) {
+    return vec3(random_float(rand_state), random_float(rand_state), random_float(rand_state));
+}
+
+__device__ vec3 random_vec(curandState& rand_state, double min, double max) {
+    return vec3(random_float(rand_state, min, max), random_float(rand_state, min, max), random_float(rand_state, min, max));
 }
