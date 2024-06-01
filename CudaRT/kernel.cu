@@ -30,14 +30,29 @@ __device__ vec3 color(curandState& local_rand_state, hittable_list** hittables, 
         else {
             vec3 unit_direction = unit_vector(cur_ray.direction());
             float t = 0.5f * (unit_direction.y() + 1.0f);
-            vec3 c = (1.0f - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
+            vec3 c = lerp(vec3(1.0, 1.0, 1.0), vec3(0.5, 0.7, 1.0), t);
             return cur_attenuation * c;
         }
     }
     return vec3(0.0, 0.0, 0.0); // exceeded recursion
 }
 
+__device__ double linear_to_gamma(double linear_component)
+{
+    if (linear_component > 0)
+        return sqrt(linear_component);
+
+    return 0;
+}
+
+__device__ vec3 linear_to_gamma(vec3 linear_vec)
+{
+   return vec3(linear_to_gamma(linear_vec.x()), linear_to_gamma(linear_vec.y()), linear_to_gamma(linear_vec.z()));
+}
+
 __device__ Uint32 vec3_to_color(vec3 color) {
+    color = linear_to_gamma(color);
+
     color *= 255.99;
 
     const Uint8 R = color.r();
@@ -98,7 +113,7 @@ int main() {
 
     int nx = 2400 / 2;
     int ny = 1200 / 2;
-    int ns = 50 / 5;
+    int ns = 50;
     int tx = 8;
     int ty = 8;
 
