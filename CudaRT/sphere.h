@@ -3,12 +3,14 @@
 #include "vec3.h"
 #include "ray.h"
 #include "hittable.h"
+#include "material.h"
 
 class Sphere {
 public:
-    __device__ Sphere(const vec3& center, float radius)
+    __device__ Sphere(const vec3& center, float radius, Material material)
 		: center(center)
 		, radius(radius)
+        , material(material)
 	{}
 
     __device__ bool hit(const ray& r, double ray_tmin, double ray_tmax, hit_record& rec) const {
@@ -36,6 +38,7 @@ public:
         // TODO: Do i need to normalize this here?
         vec3 outward_normal = unit_vector((rec.p - center) / radius);
         rec.set_face_normal(r, outward_normal);
+        rec.material = &material;
 
         return true;
 	}
@@ -43,4 +46,5 @@ public:
 private:
 	vec3 center;
 	float radius;
+    Material material;
 };

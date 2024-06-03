@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ray.h"
-#include  "hittable.h"
+#include "hittable.h"
 
 enum class MaterialType {
 	Lambertian,
@@ -18,13 +18,20 @@ struct MaterialData {
     };
 };
 
-class Material {
+struct Material {
 
     Material() = delete;
 
-    __device__ Material(MaterialData data)
-        : data(data) 
-    {}
+    __device__ Material(MaterialData data) : data(data) {}
+
+    __device__ static Material lambertian(vec3 albedo) {
+        return Material {
+            MaterialData {
+                MaterialType::Lambertian,
+                albedo
+            }
+        };
+    }
 
     __device__ bool scatter(
         const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered, curandState& rand_state
@@ -32,6 +39,11 @@ class Material {
         switch (data.type) {
         case MaterialType::Lambertian: {
             auto scatter_direction = rec.normal + random_unit_vector(rand_state);
+
+            // Catch degenerate scatter direction
+            if (scatter_direction.near_zero())
+                scatter_direction = rec.normal;
+
             scattered = ray(rec.p, scatter_direction);
             attenuation = data.lambertian.albedo;
             return true;

@@ -35,6 +35,12 @@ public:
     __host__ __device__ inline float squared_length() const { return e[0] * e[0] + e[1] * e[1] + e[2] * e[2]; }
     __host__ __device__ inline void make_unit_vector();
 
+    __host__ __device__ bool near_zero() const {
+        // Return true if the vector is close to zero in all dimensions.
+        auto s = 1e-8;
+        return (fabs(e[0]) < s) && (fabs(e[1]) < s) && (fabs(e[2]) < s);
+    }
+ 
     float e[3];
 };
 

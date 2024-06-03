@@ -11,6 +11,7 @@
 #include "sphere.h"
 #include "hittable_list.h"
 #include "camera.h"
+#include "material.h"
 
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
@@ -19,13 +20,19 @@
 
 __device__ vec3 color(curandState& local_rand_state, hittable_list** hittables, const ray& r) {
     ray cur_ray = r;
-    float cur_attenuation = 1.0f;
+    vec3 cur_attenuation = vec3(1.0, 1.0, 1.0);
     for (int i = 0; i < 50; i++) {
         hit_record rec;
         if ((*hittables)->hit(cur_ray, 0.001f, FLT_MAX, rec)) {
-            vec3 target = rec.p + rec.normal + random_in_unit_sphere(local_rand_state);
-            cur_attenuation *= 0.5f;
-            cur_ray = ray(rec.p, target - rec.p);
+            ray scattered;
+            vec3 attenuation;
+            if (rec.material->scatter(cur_ray, rec, attenuation, scattered, local_rand_state)) {
+                cur_attenuation *= attenuation;
+                cur_ray = scattered;
+            }
+            else {
+                return vec3(0.0, 0.0, 0.0);
+            }
         }
         else {
             vec3 unit_direction = unit_vector(cur_ray.direction());
@@ -94,8 +101,8 @@ __global__ void render(hittable_list** hittables, curandState* rand_state, int n
 
 __global__ void create_world(Sphere** spheres, int num_hittables, hittable_list** hittables, camera** d_camera) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
-        *(spheres) = new Sphere(vec3(0, 0, -1), 0.5);
-        *(spheres+1) = new Sphere(vec3(0, -100.5, -1), 100);
+        *(spheres) = new Sphere(vec3(0, 0, -1), 0.5, Material::lambertian(vec3(1.0, 0.0, 0.0)));
+        *(spheres+1) = new Sphere(vec3(0, -100.5, -1), 100, Material::lambertian(vec3(0.0, 1.0, 0.0)));
         *hittables = new hittable_list(spheres, num_hittables);
         *d_camera = new camera();
     }
