@@ -179,3 +179,7 @@ __device__ vec3 random_on_hemisphere(curandState& rand_state, const vec3& normal
         return -on_unit_sphere;
     }
 }
+
+__device__ vec3 reflect(const vec3& v, const vec3& n) {
+    return v - 2 * dot(v, n) * n;
+}

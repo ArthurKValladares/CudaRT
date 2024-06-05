@@ -5,17 +5,26 @@
 
 enum class MaterialType {
 	Lambertian,
+    Metal,
 };
 
 struct LambertianData {
     vec3 albedo;
 };
 
+struct MetalData{
+    vec3 albedo;
+    float fuzz;
+};
+
+union MaterialPayload {
+    LambertianData lambertian;
+    MetalData metal;
+};
+
 struct MaterialData {
     MaterialType type;
-    union {
-        LambertianData lambertian;
-    };
+    MaterialPayload payload;
 };
 
 struct Material {
@@ -25,10 +34,24 @@ struct Material {
     __device__ Material(MaterialData data) : data(data) {}
 
     __device__ static Material lambertian(vec3 albedo) {
+        MaterialPayload payload = {};
+        payload.lambertian.albedo = albedo;
         return Material {
             MaterialData {
                 MaterialType::Lambertian,
-                albedo
+                payload
+            }
+        };
+    }
+
+    __device__ static Material metal(vec3 albedo, float fuzz) {
+        MaterialPayload payload = {};
+        payload.metal.albedo = albedo;
+        payload.metal.fuzz = fuzz;
+        return Material{
+            MaterialData {
+                MaterialType::Metal,
+                payload
             }
         };
     }
@@ -45,8 +68,15 @@ struct Material {
                 scatter_direction = rec.normal;
 
             scattered = ray(rec.p, scatter_direction);
-            attenuation = data.lambertian.albedo;
+            attenuation = data.payload.lambertian.albedo;
             return true;
+        }
+        case MaterialType::Metal: {
+            vec3 reflected = reflect(r_in.direction(), rec.normal);
+            reflected = unit_vector(reflected) + (data.payload.metal.fuzz * random_unit_vector(rand_state));
+            scattered = ray(rec.p, reflected);
+            attenuation = data.payload.metal.albedo;
+            return (dot(scattered.direction(), rec.normal) > 0);
         }
         }
     }

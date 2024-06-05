@@ -102,7 +102,9 @@ __global__ void render(hittable_list** hittables, curandState* rand_state, int n
 __global__ void create_world(Sphere** spheres, int num_hittables, hittable_list** hittables, camera** d_camera) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
         *(spheres) = new Sphere(vec3(0, 0, -1), 0.5, Material::lambertian(vec3(1.0, 0.0, 0.0)));
-        *(spheres+1) = new Sphere(vec3(0, -100.5, -1), 100, Material::lambertian(vec3(0.0, 1.0, 0.0)));
+        *(spheres + 1) = new Sphere(vec3(0, -100.5, -1), 100, Material::lambertian(vec3(0.0, 1.0, 0.0)));
+        *(spheres + 2) = new Sphere(vec3(1, 0, -1), 0.5, Material::metal(vec3(0.8, 0.6, 0.2), 1.0));
+        *(spheres + 3) = new Sphere(vec3(-1, 0, -1), 0.5, Material::metal(vec3(0.8, 0.8, 0.8), 0.3));
         *hittables = new hittable_list(spheres, num_hittables);
         *d_camera = new camera();
     }
@@ -172,7 +174,7 @@ int main() {
     checkCudaErrors(cudaDeviceSynchronize());
 
     // TODO: Better create/free_world functions
-    const int sphere_count = 2;
+    const int sphere_count = 4;
     Sphere** spheres;
     checkCudaErrors(cudaMalloc(&spheres, sphere_count * sizeof(Sphere*)));
     hittable_list** hittables;
