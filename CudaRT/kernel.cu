@@ -104,7 +104,7 @@ __global__ void create_world(Sphere** spheres, int num_hittables, hittable_list*
         *(spheres) = new Sphere(vec3(0, 0, -1), 0.5, Material::lambertian(vec3(1.0, 0.0, 0.0)));
         *(spheres + 1) = new Sphere(vec3(0, -100.5, -1), 100, Material::lambertian(vec3(0.0, 1.0, 0.0)));
         *(spheres + 2) = new Sphere(vec3(1, 0, -1), 0.5, Material::metal(vec3(0.8, 0.6, 0.2), 1.0));
-        *(spheres + 3) = new Sphere(vec3(-1, 0, -1), 0.5, Material::metal(vec3(0.8, 0.8, 0.8), 0.3));
+        *(spheres + 3) = new Sphere(vec3(-1, 0, -1), 0.5, Material::dieletric(1.0 / 1.33));
         *hittables = new hittable_list(spheres, num_hittables);
         *d_camera = new camera();
     }
