@@ -1,6 +1,7 @@
 #pragma once
 
 #include <curand_kernel.h>
+#include <math_constants.h>
 
 #define EPSILON 0.000001f
 

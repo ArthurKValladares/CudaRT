@@ -16,7 +16,8 @@
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
 
-#define MAX_BOUNCE_DEPTH 50
+#define MAX_BOUNCE_DEPTH 25
+#define SAMPLES_PER_PIXEL 25
 
 __device__ vec3 color(curandState& local_rand_state, hittable_list** hittables, const ray& r) {
     ray cur_ray = r;
@@ -99,14 +100,21 @@ __global__ void render(hittable_list** hittables, curandState* rand_state, int n
     fb[pixel_index] = vec3_to_color(col / float(ns));
 }
 
-__global__ void create_world(Sphere** spheres, int num_hittables, hittable_list** hittables, camera** d_camera) {
+__global__ void create_world(Sphere** spheres, int num_hittables, hittable_list** hittables, camera** d_camera, int nx, int ny) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
-        *(spheres) = new Sphere(vec3(0, 0, -1), 0.5, Material::lambertian(vec3(1.0, 0.0, 0.0)));
-        *(spheres + 1) = new Sphere(vec3(0, -100.5, -1), 100, Material::lambertian(vec3(0.0, 1.0, 0.0)));
-        *(spheres + 2) = new Sphere(vec3(1, 0, -1), 0.5, Material::metal(vec3(0.8, 0.6, 0.2), 1.0));
-        *(spheres + 3) = new Sphere(vec3(-1, 0, -1), 0.5, Material::dieletric(1.0 / 1.33));
+        *(spheres) = new Sphere(vec3(0, 0, -1), 0.5, Material::lambertian(vec3(0.1, 0.2, 0.5)));
+        *(spheres + 1) = new Sphere(vec3(0, -100.5, -1), 100, Material::lambertian((vec3(0.8, 0.8, 0.0))));
+        *(spheres + 2) = new Sphere(vec3(1, 0, -1), 0.5, Material::metal(vec3(0.8, 0.6, 0.2), 0.0));
+        *(spheres + 3) = new Sphere(vec3(-1, 0, -1), 0.5, Material::dieletric(1.5));
+        *(spheres + 4) = new Sphere(vec3(-1, 0, -1), -0.45, Material::dieletric(1.5));
         *hittables = new hittable_list(spheres, num_hittables);
-        *d_camera = new camera();
+        *d_camera = new camera(
+            vec3(-2, 2, 1),
+            vec3(0, 0, -1),
+            vec3(0, 1, 0),
+            20.0,
+            float(nx) / float(ny)
+        );
     }
 }
 
@@ -122,15 +130,15 @@ int main() {
 
     int nx = 2400 / 2;
     int ny = 1200 / 2;
-    int ns = 50;
-    int tx = 8;
-    int ty = 8;
 
     int num_pixels = nx * ny;
     size_t fb_size = num_pixels * sizeof(vec3);
 
     const size_t surface_buffer_size = nx * ny * sizeof(Uint32);
 
+    // Block stuff
+    int tx = 8;
+    int ty = 8;
     dim3 blocks(nx / tx + 1, ny / ty + 1);
     dim3 threads(tx, ty);
 
@@ -174,7 +182,7 @@ int main() {
     checkCudaErrors(cudaDeviceSynchronize());
 
     // TODO: Better create/free_world functions
-    const int sphere_count = 4;
+    const int sphere_count = 5;
     Sphere** spheres;
     checkCudaErrors(cudaMalloc(&spheres, sphere_count * sizeof(Sphere*)));
     hittable_list** hittables;
@@ -182,7 +190,7 @@ int main() {
     camera** d_camera;
     checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(camera*)));
 
-    create_world << <1, 1 >> > (spheres, sphere_count, hittables, d_camera);
+    create_world << <1, 1 >> > (spheres, sphere_count, hittables, d_camera, nx, ny);
 
     bool quit = false;
     while (!quit) {
@@ -217,7 +225,7 @@ int main() {
 
             render << <blocks, threads >> > (
                 hittables,
-                d_rand_state, ns,
+                d_rand_state, SAMPLES_PER_PIXEL,
                 surface_buffer, nx, ny,
                 d_camera
             );
