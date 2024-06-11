@@ -149,15 +149,15 @@ __host__ __device__ inline vec3 unit_vector(vec3 v) {
 }
 
 // TODO: Make these host as well, need a host random_float function
-__device__ vec3 random_vec(curandState& rand_state) {
+__device__ vec3 random_vec(curandState* rand_state) {
     return vec3(random_float(rand_state), random_float(rand_state), random_float(rand_state));
 }
 
-__device__ vec3 random_vec(curandState& rand_state, double min, double max) {
+__device__ vec3 random_vec(curandState* rand_state, double min, double max) {
     return vec3(random_float(rand_state, min, max), random_float(rand_state, min, max), random_float(rand_state, min, max));
 }
 
-__device__ vec3 random_in_unit_sphere(curandState& rand_state) {
+__device__ vec3 random_in_unit_sphere(curandState* rand_state) {
     vec3 p;
     do {
         p = 2.0f * random_vec(rand_state) - vec3(1, 1, 1);
@@ -165,11 +165,11 @@ __device__ vec3 random_in_unit_sphere(curandState& rand_state) {
     return p;
 }
 
-__device__ vec3 random_unit_vector(curandState& rand_state) {
+__device__ vec3 random_unit_vector(curandState* rand_state) {
     return unit_vector(random_in_unit_sphere(rand_state));
 }
 
-__device__ vec3 random_on_hemisphere(curandState& rand_state, const vec3& normal) {
+__device__ vec3 random_on_hemisphere(curandState* rand_state, const vec3& normal) {
     vec3 on_unit_sphere = random_unit_vector(rand_state);
     // In the same hemisphere as the normal
     if (dot(on_unit_sphere, normal) > 0.0) {
@@ -177,6 +177,16 @@ __device__ vec3 random_on_hemisphere(curandState& rand_state, const vec3& normal
     }
     else {
         return -on_unit_sphere;
+    }
+}
+
+__device__ vec3 random_in_unit_disk(curandState* rand_state) {
+    vec3 p;
+    while (true) {
+        p = vec3(random_float(rand_state , -1, 1), random_float(rand_state , -1, 1), 0);
+        if (p.squared_length() < 1) {
+            return p;
+        }
     }
 }
 

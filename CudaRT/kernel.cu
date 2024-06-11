@@ -16,10 +16,10 @@
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
 
-#define MAX_BOUNCE_DEPTH 25
-#define SAMPLES_PER_PIXEL 25
+#define MAX_BOUNCE_DEPTH 50
+#define SAMPLES_PER_PIXEL 50
 
-__device__ vec3 color(curandState& local_rand_state, hittable_list** hittables, const ray& r) {
+__device__ vec3 color(curandState* local_rand_state, hittable_list** hittables, const ray& r) {
     ray cur_ray = r;
     vec3 cur_attenuation = vec3(1.0, 1.0, 1.0);
     for (int i = 0; i < 50; i++) {
@@ -87,14 +87,14 @@ __global__ void render(hittable_list** hittables, curandState* rand_state, int n
     if ((i >= max_x) || (j >= max_y)) return;
     int flipped_j = max_y - 1 - j;
     int pixel_index = flipped_j * max_x + i;
-    curandState& local_rand_state = rand_state[pixel_index];
+    curandState local_rand_state = rand_state[pixel_index];
 
     vec3 col(0., 0., 0.);
     for (int s = 0; s < ns; s++) {
-        float u = float(i + random_float(local_rand_state)) / float(max_x);
-        float v = float(j + random_float(local_rand_state)) / float(max_y);
-        ray r = (*cam)->get_ray(u, v);
-        col += color(local_rand_state, hittables, r);
+        float u = float(i + random_float(&local_rand_state)) / float(max_x);
+        float v = float(j + random_float(&local_rand_state)) / float(max_y);
+        ray r = (*cam)->get_ray(u, v, rand_state);
+        col += color(&local_rand_state, hittables, r);
     }
 
     fb[pixel_index] = vec3_to_color(col / float(ns));
@@ -108,12 +108,18 @@ __global__ void create_world(Sphere** spheres, int num_hittables, hittable_list*
         *(spheres + 3) = new Sphere(vec3(-1, 0, -1), 0.5, Material::dieletric(1.5));
         *(spheres + 4) = new Sphere(vec3(-1, 0, -1), -0.45, Material::dieletric(1.5));
         *hittables = new hittable_list(spheres, num_hittables);
+        vec3 origin(3, 3, 2);
+        vec3 look_at(0, 0, -1);
+        float dist_to_focus = (origin - look_at).length();
+        float aperture = 2.0;
         *d_camera = new camera(
-            vec3(-2, 2, 1),
-            vec3(0, 0, -1),
+            origin,
+            look_at,
             vec3(0, 1, 0),
             20.0,
-            float(nx) / float(ny)
+            float(nx) / float(ny),
+            aperture,
+            dist_to_focus
         );
     }
 }

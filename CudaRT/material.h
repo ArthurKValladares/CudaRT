@@ -74,7 +74,7 @@ struct Material {
     }
 
     __device__ bool scatter(
-        const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered, curandState& rand_state
+        const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered, curandState* rand_state
     ) const {
         switch (data.type) {
         case MaterialType::Lambertian: {
