@@ -102,11 +102,11 @@ __global__ void render(HittableList** hittables, curandState* rand_state, int ns
 
 __global__ void create_world(Sphere** spheres, int num_hittables, HittableList** hittables, Camera** d_camera, int nx, int ny) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
-        *(spheres) = new Sphere(Vec3f32(0, 0, -1), 0.5, Material::lambertian(Vec3f32(0.1, 0.2, 0.5)));
-        *(spheres + 1) = new Sphere(Vec3f32(0, -100.5, -1), 100, Material::lambertian((Vec3f32(0.8, 0.8, 0.0))));
-        *(spheres + 2) = new Sphere(Vec3f32(1, 0, -1), 0.5, Material::metal(Vec3f32(0.8, 0.6, 0.2), 0.0));
-        *(spheres + 3) = new Sphere(Vec3f32(-1, 0, -1), 0.5, Material::dieletric(1.5));
-        *(spheres + 4) = new Sphere(Vec3f32(-1, 0, -1), -0.45, Material::dieletric(1.5));
+        spheres[0] = new Sphere(Vec3f32(0, 0, -1), 0.5, Material::lambertian(Vec3f32(0.1, 0.2, 0.5)));
+        spheres[1] = new Sphere(Vec3f32(0, -100.5, -1), 100, Material::lambertian((Vec3f32(0.8, 0.8, 0.0))));
+        spheres[2] = new Sphere(Vec3f32(1, 0, -1), 0.5, Material::metal(Vec3f32(0.8, 0.6, 0.2), 0.0));
+        spheres[3] = new Sphere(Vec3f32(-1, 0, -1), 0.5, Material::dieletric(1.5));
+        spheres[4] = new Sphere(Vec3f32(-1, 0, -1), -0.45, Material::dieletric(1.5));
         *hittables = new HittableList(spheres, num_hittables);
         Vec3f32 origin(3, 3, 2);
         Vec3f32 look_at(0, 0, -1);
