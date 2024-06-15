@@ -16,13 +16,16 @@
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
 
-#define MAX_BOUNCE_DEPTH 50
-#define SAMPLES_PER_PIXEL 50
+#define MAX_BOUNCE_DEPTH 25
+#define SAMPLES_PER_PIXEL 25
+
+#define SPHERES_GRID_SIZE 0
+#define SPHERE_COUNT (SPHERES_GRID_SIZE * SPHERES_GRID_SIZE) * 2 + 1 + 3
 
 __device__ Vec3f32 color(curandState* local_rand_state, HittableList** hittables, const Ray& r) {
     Ray cur_ray = r;
     Vec3f32 cur_attenuation = Vec3f32(1.0, 1.0, 1.0);
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < MAX_BOUNCE_DEPTH; i++) {
         HitRecord rec;
         if ((*hittables)->hit(cur_ray, 0.001f, FLT_MAX, rec)) {
             Ray scattered;
@@ -100,23 +103,54 @@ __global__ void render(HittableList** hittables, curandState* rand_state, int ns
     fb[pixel_index] = vec3_to_color(col / float(ns));
 }
 
-__global__ void create_world(Sphere** spheres, int num_hittables, HittableList** hittables, Camera** d_camera, int nx, int ny) {
+__global__ void create_world(curandState* rand_state, Sphere** spheres, HittableList** hittables, Camera** d_camera, int nx, int ny) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
-        spheres[0] = new Sphere(Vec3f32(0, 0, -1), 0.5, Material::lambertian(Vec3f32(0.1, 0.2, 0.5)));
-        spheres[1] = new Sphere(Vec3f32(0, -100.5, -1), 100, Material::lambertian((Vec3f32(0.8, 0.8, 0.0))));
-        spheres[2] = new Sphere(Vec3f32(1, 0, -1), 0.5, Material::metal(Vec3f32(0.8, 0.6, 0.2), 0.0));
-        spheres[3] = new Sphere(Vec3f32(-1, 0, -1), 0.5, Material::dieletric(1.5));
-        spheres[4] = new Sphere(Vec3f32(-1, 0, -1), -0.45, Material::dieletric(1.5));
-        *hittables = new HittableList(spheres, num_hittables);
-        Vec3f32 origin(3, 3, 2);
-        Vec3f32 look_at(0, 0, -1);
+        spheres[0] = new Sphere(Vec3f32(0, -1000.0, -1), 1000,
+            Material::lambertian(Vec3f32(0.5, 0.5, 0.)));
+        int i = 1;
+
+        for (int a = -SPHERES_GRID_SIZE; a < SPHERES_GRID_SIZE; a++) {
+            for (int b = -SPHERES_GRID_SIZE; b < SPHERES_GRID_SIZE; b++) {
+                const float choose_material = random_float(rand_state);
+                const Vec3f32 center = Vec3f32(a + random_float(rand_state), 0.2, random_float(rand_state));
+
+                if (choose_material < 0.8f) {
+                    const float r = random_float(rand_state) * random_float(rand_state);
+                    const float g = random_float(rand_state) * random_float(rand_state);
+                    const float b = random_float(rand_state) * random_float(rand_state);
+
+                    spheres[i++] = new Sphere(center, 0.2,
+                        Material::lambertian(Vec3f32(r, g, b)));
+                }
+                else if (choose_material < 0.95f) {
+                    const float r = 0.5f * (1.0f + random_float(rand_state));
+                    const float g = 0.5f * (1.0f + random_float(rand_state));
+                    const float b = 0.5f * (1.0f + random_float(rand_state));
+                    const float fuzz = 0.5f * random_float(rand_state);
+                    
+                    spheres[i++] = new Sphere(center, 0.2,
+                        Material::metal(Vec3f32(r, g, b), fuzz));
+                }
+                else {
+                    spheres[i++] = new Sphere(center, 0.2, Material::dieletric(1.5));
+                }
+            }
+        }
+        spheres[i++] = new Sphere(Vec3f32(0, 1, 0), 1, Material::dieletric(1.5));
+        spheres[i++] = new Sphere(Vec3f32(-4, 1, 0), 1, Material::lambertian(Vec3f32(0.4, 0.2, 0.1)));
+        spheres[i++] = new Sphere(Vec3f32(4, 1, 0), 1, Material::metal(Vec3f32(0.7, 0.6, 0.5), 0.0));
+
+        *hittables = new HittableList(spheres, SPHERE_COUNT);
+
+        Vec3f32 origin(13, 2, 3);
+        Vec3f32 look_at(0, 0, 0);
         float dist_to_focus = (origin - look_at).length();
-        float aperture = 2.0;
+        float aperture = 0.1;
         *d_camera = new Camera(
             origin,
             look_at,
             Vec3f32(0, 1, 0),
-            20.0,
+            30.0,
             float(nx) / float(ny),
             aperture,
             dist_to_focus
@@ -125,8 +159,9 @@ __global__ void create_world(Sphere** spheres, int num_hittables, HittableList**
 }
 
 __global__ void free_world(Sphere** spheres, HittableList** hittables, Camera** d_camera) {
-    delete* (spheres);
-    delete* (spheres+1);
+    for (int i = 0; i < SPHERE_COUNT; ++i) {
+        delete spheres[i];
+    }
     delete* hittables;
     delete* d_camera;
 }
@@ -134,8 +169,8 @@ __global__ void free_world(Sphere** spheres, HittableList** hittables, Camera** 
 int main() {
     clock_t start, stop;
 
-    int nx = 2400 / 2;
-    int ny = 1200 / 2;
+    int nx = 2400 / 3;
+    int ny = 1200 / 3;
 
     int num_pixels = nx * ny;
     size_t fb_size = num_pixels * sizeof(Vec3f32);
@@ -188,15 +223,14 @@ int main() {
     checkCudaErrors(cudaDeviceSynchronize());
 
     // TODO: Better create/free_world functions
-    const int sphere_count = 5;
     Sphere** spheres;
-    checkCudaErrors(cudaMalloc(&spheres, sphere_count * sizeof(Sphere*)));
+    checkCudaErrors(cudaMalloc(&spheres, SPHERE_COUNT * sizeof(Sphere*)));
     HittableList** hittables;
     checkCudaErrors(cudaMalloc(&hittables, sizeof(HittableList*)));
     Camera** d_camera;
     checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(Camera*)));
 
-    create_world << <1, 1 >> > (spheres, sphere_count, hittables, d_camera, nx, ny);
+    create_world << <1, 1 >> > (d_rand_state, spheres, hittables, d_camera, nx, ny);
 
     bool quit = false;
     while (!quit) {
