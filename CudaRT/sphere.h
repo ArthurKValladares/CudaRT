@@ -7,14 +7,14 @@
 
 class Sphere {
 public:
-    __device__ Sphere(const vec3& center, float radius, Material material)
+    __device__ Sphere(const Vec3f32& center, float radius, Material material)
 		: center(center)
 		, radius(radius)
         , material(material)
 	{}
 
-    __device__ bool hit(const ray& r, double ray_tmin, double ray_tmax, hit_record& rec) const {
-        vec3 oc = center - r.origin();
+    __device__ bool hit(const Ray& r, double ray_tmin, double ray_tmax, HitRecord& rec) const {
+        Vec3f32 oc = center - r.origin();
         auto a = r.direction().squared_length();
         auto h = dot(r.direction(), oc);
         auto c = oc.squared_length() - radius * radius;
@@ -36,7 +36,7 @@ public:
         rec.t = root;
         rec.p = r.at(rec.t);
         // TODO: Do i need to normalize this here?
-        vec3 outward_normal = unit_vector((rec.p - center) / radius);
+        Vec3f32 outward_normal = unit_vector((rec.p - center) / radius);
         rec.set_face_normal(r, outward_normal);
         rec.material = &material;
 
@@ -44,7 +44,7 @@ public:
 	}
 
 private:
-	vec3 center;
+	Vec3f32 center;
 	float radius;
     Material material;
 };

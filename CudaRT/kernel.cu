@@ -19,30 +19,30 @@
 #define MAX_BOUNCE_DEPTH 50
 #define SAMPLES_PER_PIXEL 50
 
-__device__ vec3 color(curandState* local_rand_state, hittable_list** hittables, const ray& r) {
-    ray cur_ray = r;
-    vec3 cur_attenuation = vec3(1.0, 1.0, 1.0);
+__device__ Vec3f32 color(curandState* local_rand_state, HittableList** hittables, const Ray& r) {
+    Ray cur_ray = r;
+    Vec3f32 cur_attenuation = Vec3f32(1.0, 1.0, 1.0);
     for (int i = 0; i < 50; i++) {
-        hit_record rec;
+        HitRecord rec;
         if ((*hittables)->hit(cur_ray, 0.001f, FLT_MAX, rec)) {
-            ray scattered;
-            vec3 attenuation;
+            Ray scattered;
+            Vec3f32 attenuation;
             if (rec.material->scatter(cur_ray, rec, attenuation, scattered, local_rand_state)) {
                 cur_attenuation *= attenuation;
                 cur_ray = scattered;
             }
             else {
-                return vec3(0.0, 0.0, 0.0);
+                return Vec3f32(0.0, 0.0, 0.0);
             }
         }
         else {
-            vec3 unit_direction = unit_vector(cur_ray.direction());
+            Vec3f32 unit_direction = unit_vector(cur_ray.direction());
             float t = 0.5f * (unit_direction.y() + 1.0f);
-            vec3 c = lerp(vec3(1.0, 1.0, 1.0), vec3(0.5, 0.7, 1.0), t);
+            Vec3f32 c = lerp(Vec3f32(1.0, 1.0, 1.0), Vec3f32(0.5, 0.7, 1.0), t);
             return cur_attenuation * c;
         }
     }
-    return vec3(0.0, 0.0, 0.0); // exceeded recursion
+    return Vec3f32(0.0, 0.0, 0.0); // exceeded recursion
 }
 
 __device__ double linear_to_gamma(double linear_component)
@@ -53,12 +53,12 @@ __device__ double linear_to_gamma(double linear_component)
     return 0;
 }
 
-__device__ vec3 linear_to_gamma(vec3 linear_vec)
+__device__ Vec3f32 linear_to_gamma(Vec3f32 linear_vec)
 {
-   return vec3(linear_to_gamma(linear_vec.x()), linear_to_gamma(linear_vec.y()), linear_to_gamma(linear_vec.z()));
+   return Vec3f32(linear_to_gamma(linear_vec.x()), linear_to_gamma(linear_vec.y()), linear_to_gamma(linear_vec.z()));
 }
 
-__device__ Uint32 vec3_to_color(vec3 color) {
+__device__ Uint32 vec3_to_color(Vec3f32 color) {
     color = linear_to_gamma(color);
 
     color *= 255.99;
@@ -81,7 +81,7 @@ __global__ void render_init(int max_x, int max_y, curandState* rand_state) {
     curand_init(seed, pixel_index, offset, &rand_state[pixel_index]);
 }
 
-__global__ void render(hittable_list** hittables, curandState* rand_state, int ns, Uint32* fb, int max_x, int max_y, camera** cam) {
+__global__ void render(HittableList** hittables, curandState* rand_state, int ns, Uint32* fb, int max_x, int max_y, Camera** cam) {
     int i = threadIdx.x + blockIdx.x * blockDim.x;
     int j = threadIdx.y + blockIdx.y * blockDim.y;
     if ((i >= max_x) || (j >= max_y)) return;
@@ -89,33 +89,33 @@ __global__ void render(hittable_list** hittables, curandState* rand_state, int n
     int pixel_index = flipped_j * max_x + i;
     curandState local_rand_state = rand_state[pixel_index];
 
-    vec3 col(0., 0., 0.);
+    Vec3f32 col(0., 0., 0.);
     for (int s = 0; s < ns; s++) {
         float u = float(i + random_float(&local_rand_state)) / float(max_x);
         float v = float(j + random_float(&local_rand_state)) / float(max_y);
-        ray r = (*cam)->get_ray(u, v, rand_state);
+        Ray r = (*cam)->get_ray(u, v, rand_state);
         col += color(&local_rand_state, hittables, r);
     }
 
     fb[pixel_index] = vec3_to_color(col / float(ns));
 }
 
-__global__ void create_world(Sphere** spheres, int num_hittables, hittable_list** hittables, camera** d_camera, int nx, int ny) {
+__global__ void create_world(Sphere** spheres, int num_hittables, HittableList** hittables, Camera** d_camera, int nx, int ny) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
-        *(spheres) = new Sphere(vec3(0, 0, -1), 0.5, Material::lambertian(vec3(0.1, 0.2, 0.5)));
-        *(spheres + 1) = new Sphere(vec3(0, -100.5, -1), 100, Material::lambertian((vec3(0.8, 0.8, 0.0))));
-        *(spheres + 2) = new Sphere(vec3(1, 0, -1), 0.5, Material::metal(vec3(0.8, 0.6, 0.2), 0.0));
-        *(spheres + 3) = new Sphere(vec3(-1, 0, -1), 0.5, Material::dieletric(1.5));
-        *(spheres + 4) = new Sphere(vec3(-1, 0, -1), -0.45, Material::dieletric(1.5));
-        *hittables = new hittable_list(spheres, num_hittables);
-        vec3 origin(3, 3, 2);
-        vec3 look_at(0, 0, -1);
+        *(spheres) = new Sphere(Vec3f32(0, 0, -1), 0.5, Material::lambertian(Vec3f32(0.1, 0.2, 0.5)));
+        *(spheres + 1) = new Sphere(Vec3f32(0, -100.5, -1), 100, Material::lambertian((Vec3f32(0.8, 0.8, 0.0))));
+        *(spheres + 2) = new Sphere(Vec3f32(1, 0, -1), 0.5, Material::metal(Vec3f32(0.8, 0.6, 0.2), 0.0));
+        *(spheres + 3) = new Sphere(Vec3f32(-1, 0, -1), 0.5, Material::dieletric(1.5));
+        *(spheres + 4) = new Sphere(Vec3f32(-1, 0, -1), -0.45, Material::dieletric(1.5));
+        *hittables = new HittableList(spheres, num_hittables);
+        Vec3f32 origin(3, 3, 2);
+        Vec3f32 look_at(0, 0, -1);
         float dist_to_focus = (origin - look_at).length();
         float aperture = 2.0;
-        *d_camera = new camera(
+        *d_camera = new Camera(
             origin,
             look_at,
-            vec3(0, 1, 0),
+            Vec3f32(0, 1, 0),
             20.0,
             float(nx) / float(ny),
             aperture,
@@ -124,7 +124,7 @@ __global__ void create_world(Sphere** spheres, int num_hittables, hittable_list*
     }
 }
 
-__global__ void free_world(Sphere** spheres, hittable_list** hittables, camera** d_camera) {
+__global__ void free_world(Sphere** spheres, HittableList** hittables, Camera** d_camera) {
     delete* (spheres);
     delete* (spheres+1);
     delete* hittables;
@@ -138,7 +138,7 @@ int main() {
     int ny = 1200 / 2;
 
     int num_pixels = nx * ny;
-    size_t fb_size = num_pixels * sizeof(vec3);
+    size_t fb_size = num_pixels * sizeof(Vec3f32);
 
     const size_t surface_buffer_size = nx * ny * sizeof(Uint32);
 
@@ -191,10 +191,10 @@ int main() {
     const int sphere_count = 5;
     Sphere** spheres;
     checkCudaErrors(cudaMalloc(&spheres, sphere_count * sizeof(Sphere*)));
-    hittable_list** hittables;
-    checkCudaErrors(cudaMalloc(&hittables, sizeof(hittable_list*)));
-    camera** d_camera;
-    checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(camera*)));
+    HittableList** hittables;
+    checkCudaErrors(cudaMalloc(&hittables, sizeof(HittableList*)));
+    Camera** d_camera;
+    checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(Camera*)));
 
     create_world << <1, 1 >> > (spheres, sphere_count, hittables, d_camera, nx, ny);
 

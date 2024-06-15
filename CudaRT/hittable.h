@@ -8,15 +8,15 @@
 #include "ray.h"
 
 struct Material;
-class hit_record {
+class HitRecord {
 public:
-	vec3 p;
-	vec3 normal;
+	Vec3f32 p;
+	Vec3f32 normal;
 	float t;
 	bool front_face;
 	const Material* material;
 
-	__device__ void set_face_normal(const ray& r, const vec3& outward_normal) {
+	__device__ void set_face_normal(const Ray& r, const Vec3f32& outward_normal) {
 		assert(float_equals(outward_normal.length(), 1.0));
 
 		front_face = dot(r.direction(), outward_normal) < 0;

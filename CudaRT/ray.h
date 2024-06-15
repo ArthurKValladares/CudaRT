@@ -2,15 +2,15 @@
 
 #include "vec3.h"
 
-class ray
+class Ray
 {
 public:
-    __device__ ray() {}
-    __device__ ray(const vec3& a, const vec3& b) { A = a; B = b; }
-    __device__ vec3 origin() const { return A; }
-    __device__ vec3 direction() const { return B; }
-    __device__ vec3 at(float t) const { return A + t * B; }
+    __device__ Ray() {}
+    __device__ Ray(const Vec3f32& a, const Vec3f32& b) { A = a; B = b; }
+    __device__ Vec3f32 origin() const { return A; }
+    __device__ Vec3f32 direction() const { return B; }
+    __device__ Vec3f32 at(float t) const { return A + t * B; }
 
-    vec3 A;
-    vec3 B;
+    Vec3f32 A;
+    Vec3f32 B;
 };
