@@ -19,6 +19,10 @@ public:
         vertical = 2.0f * half_height * focus_dist * v;
     }
 
+    __device__ void update_position(Vec3f32 disp) {
+        origin += disp;
+    }
+
     __device__ Ray get_ray(float s, float t, curandState* rand_state) {
         Vec3f32 rd = lens_radius * random_in_unit_disk(rand_state);
         Vec3f32 offset = u * rd.x() + v * rd.y();

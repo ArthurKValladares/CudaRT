@@ -22,6 +22,9 @@
 #define SPHERES_GRID_SIZE 0
 #define SPHERE_COUNT (SPHERES_GRID_SIZE * SPHERES_GRID_SIZE) * 2 + 1 + 3
 
+// TODO: Should probably be in the camera class itself
+#define CAMERA_METERS_PER_SECOND 1.0
+
 __device__ Vec3f32 color(curandState* local_rand_state, HittableList** hittables, const Ray& r) {
     Ray cur_ray = r;
     Vec3f32 cur_attenuation = Vec3f32(1.0, 1.0, 1.0);
@@ -166,6 +169,10 @@ __global__ void free_world(Sphere** spheres, HittableList** hittables, Camera** 
     delete* d_camera;
 }
 
+__global__ void update_camera(Camera** d_camera, Vec3f32 displacement) {
+    (*d_camera)->update_position(displacement);
+}
+
 int main() {
     clock_t start, stop;
 
@@ -232,8 +239,10 @@ int main() {
 
     create_world << <1, 1 >> > (d_rand_state, spheres, hittables, d_camera, nx, ny);
 
+    double timer_seconds = 0.0;
     bool quit = false;
     while (!quit) {
+        const float displacement = CAMERA_METERS_PER_SECOND * timer_seconds;
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
             switch (e.type) {
@@ -241,6 +250,30 @@ int main() {
                     switch (e.key.keysym.sym) {
                         case SDLK_ESCAPE: {
                             quit = true;
+                            break;
+                        }
+                        case SDLK_w: {
+                            update_camera << <1, 1 >> > (d_camera, Vec3f32(displacement, 0.0, 0.0));
+                            break;
+                        }
+                        case SDLK_a: {
+                            update_camera << <1, 1 >> > (d_camera, Vec3f32(0.0, 0.0, -displacement));
+                            break;
+                        }
+                        case SDLK_s: {
+                            update_camera << <1, 1 >> > (d_camera, Vec3f32(-displacement, 0.0, 0.0));
+                            break;
+                        }
+                        case SDLK_d: {
+                            update_camera << <1, 1 >> > (d_camera, Vec3f32(0.0, 0.0, displacement));
+                            break;
+                        }
+                        case SDLK_SPACE: {
+                            update_camera << <1, 1 >> > (d_camera, Vec3f32(0.0, displacement, 0.0));
+                            break;
+                        }
+                        case SDLK_LSHIFT: {
+                            update_camera << <1, 1 >> > (d_camera, Vec3f32(0.0, -displacement, 0.0));
                             break;
                         }
                         default: {
@@ -274,7 +307,7 @@ int main() {
             checkCudaErrors(cudaMemcpy(surface->pixels, surface_buffer, surface_buffer_size, cudaMemcpyDeviceToHost));
 
             stop = clock();
-            double timer_seconds = ((double)(stop - start)) / CLOCKS_PER_SEC;
+            timer_seconds = ((double)(stop - start)) / CLOCKS_PER_SEC;
             std::cerr << "took " << timer_seconds << " seconds.\n";
         }
         SDL_UnlockSurface(surface);
