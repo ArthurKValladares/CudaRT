@@ -19,7 +19,7 @@
 #define MAX_BOUNCE_DEPTH 5
 #define SAMPLES_PER_PIXEL 25
 
-#define SPHERES_GRID_SIZE 5
+#define SPHERES_GRID_SIZE 0
 #define SPHERE_COUNT (SPHERES_GRID_SIZE * 2 * SPHERES_GRID_SIZE * 2) + 1 + 3
 
 // TODO: Should probably be in the camera class itself
@@ -324,8 +324,10 @@ int main() {
     // Cleanup
     checkCudaErrors(cudaDeviceSynchronize());
     free_world << <1, 1 >> > (spheres, hittables, d_camera);
+    checkCudaErrors(cudaGetLastError());
+    checkCudaErrors(cudaFree(d_camera));
+    checkCudaErrors(cudaFree(d_rand_state));
     checkCudaErrors(cudaFree(surface_buffer));
-    checkCudaErrors(cudaFree(spheres));
 
     SDL_DestroyWindow(window);
     SDL_Quit();
