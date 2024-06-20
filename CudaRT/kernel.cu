@@ -16,11 +16,11 @@
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
 
-#define MAX_BOUNCE_DEPTH 25
+#define MAX_BOUNCE_DEPTH 5
 #define SAMPLES_PER_PIXEL 25
 
-#define SPHERES_GRID_SIZE 0
-#define SPHERE_COUNT (SPHERES_GRID_SIZE * SPHERES_GRID_SIZE) * 2 + 1 + 3
+#define SPHERES_GRID_SIZE 5
+#define SPHERE_COUNT (SPHERES_GRID_SIZE * 2 * SPHERES_GRID_SIZE * 2) + 1 + 3
 
 // TODO: Should probably be in the camera class itself
 #define CAMERA_METERS_PER_SECOND 1.0
@@ -115,7 +115,7 @@ __global__ void create_world(curandState* rand_state, Sphere** spheres, Hittable
         for (int a = -SPHERES_GRID_SIZE; a < SPHERES_GRID_SIZE; a++) {
             for (int b = -SPHERES_GRID_SIZE; b < SPHERES_GRID_SIZE; b++) {
                 const float choose_material = random_float(rand_state);
-                const Vec3f32 center = Vec3f32(a + random_float(rand_state), 0.2, random_float(rand_state));
+                const Vec3f32 center = Vec3f32(a + random_float(rand_state), 0.2, b + random_float(rand_state));
 
                 if (choose_material < 0.8f) {
                     const float r = random_float(rand_state) * random_float(rand_state);
