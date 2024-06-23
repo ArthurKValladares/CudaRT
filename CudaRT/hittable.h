@@ -17,9 +17,6 @@ public:
 	const Material* material;
 
 	__device__ void set_face_normal(const Ray& r, const Vec3f32& outward_normal) {
-		// TODO: Figure this out
-		//assert(float_equals(outward_normal.length(), 1.0));
-
 		front_face = dot(r.direction(), outward_normal) < 0;
 		normal = front_face ? outward_normal : -outward_normal;
 	}

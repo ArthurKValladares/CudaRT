@@ -17,10 +17,10 @@
 #include "SDL.h"
 
 #define MAX_BOUNCE_DEPTH 5
-#define SAMPLES_PER_PIXEL 25
+#define SAMPLES_PER_PIXEL 15
 
-#define SPHERES_GRID_SIZE 0
-#define SPHERE_COUNT (SPHERES_GRID_SIZE * 2 * SPHERES_GRID_SIZE * 2) + 1 + 3
+#define SPHERES_GRID_SIZE 9
+#define SPHERE_COUNT (SPHERES_GRID_SIZE * 2 * SPHERES_GRID_SIZE * 2) + 1
 
 // TODO: Should probably be in the camera class itself
 #define CAMERA_METERS_PER_SECOND 1.0
@@ -108,9 +108,10 @@ __global__ void render(HittableList** hittables, curandState* rand_state, int ns
 
 __global__ void create_world(curandState* rand_state, Sphere** spheres, HittableList** hittables, Camera** d_camera, int nx, int ny) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
-        spheres[0] = new Sphere(Vec3f32(0, -1000.0, -1), 1000,
+        int i = 0;
+
+        spheres[i++] = new Sphere(Vec3f32(0, -1000.0, -1), 1000,
             Material::lambertian(Vec3f32(0.5, 0.5, 0.)));
-        int i = 1;
 
         for (int a = -SPHERES_GRID_SIZE; a < SPHERES_GRID_SIZE; a++) {
             for (int b = -SPHERES_GRID_SIZE; b < SPHERES_GRID_SIZE; b++) {
@@ -139,13 +140,14 @@ __global__ void create_world(curandState* rand_state, Sphere** spheres, Hittable
                 }
             }
         }
-        spheres[i++] = new Sphere(Vec3f32(0, 1, 0), 1, Material::dieletric(1.5));
-        spheres[i++] = new Sphere(Vec3f32(-4, 1, 0), 1, Material::lambertian(Vec3f32(0.4, 0.2, 0.1)));
-        spheres[i++] = new Sphere(Vec3f32(4, 1, 0), 1, Material::metal(Vec3f32(0.7, 0.6, 0.5), 0.0));
+        //spheres[i++] = new Sphere(Vec3f32(0, 1, 0), 1, Material::dieletric(1.5));
+        //spheres[i++] = new Sphere(Vec3f32(-4, 1, 0), 1, Material::lambertian(Vec3f32(0.4, 0.2, 0.1)));
+        //spheres[i++] = new Sphere(Vec3f32(4, 1, 0), 1, Material::metal(Vec3f32(0.7, 0.6, 0.5), 0.0));
 
-        *hittables = new HittableList(spheres, SPHERE_COUNT);
+        assert(SPHERE_COUNT == i);
+        *hittables = new HittableList(spheres, i);
 
-        Vec3f32 origin(13, 2, 3);
+        Vec3f32 origin(13, 3, 3);
         Vec3f32 look_at(0, 0, 0);
         float dist_to_focus = (origin - look_at).length();
         float aperture = 0.1;
@@ -325,7 +327,6 @@ int main() {
     checkCudaErrors(cudaDeviceSynchronize());
     free_world << <1, 1 >> > (spheres, hittables, d_camera);
     checkCudaErrors(cudaGetLastError());
-    checkCudaErrors(cudaFree(d_camera));
     checkCudaErrors(cudaFree(d_rand_state));
     checkCudaErrors(cudaFree(surface_buffer));
 
