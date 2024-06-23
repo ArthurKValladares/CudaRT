@@ -21,7 +21,7 @@ C:\Users\Arthur\Documents\projects\cudart\CudaRT\math.h(14): warning #940-D: mis
             detected during instantiation of "T lerp(T, T, float) [with T=Vec3f32]" at line 47 of C:\Users\Arthur\Documents\projects\cudart\CudaRT\kernel.cu
   
   kernel.cu
-  tmpxft_00003d50_00000000-7_kernel.cudafe1.cpp
+  tmpxft_000010fc_00000000-7_kernel.cudafe1.cpp
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\vec3.h(60): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\vec3.h(139): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\kernel.cu(247): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data

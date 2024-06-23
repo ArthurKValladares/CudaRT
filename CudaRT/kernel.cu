@@ -20,7 +20,7 @@
 #define SAMPLES_PER_PIXEL 15
 
 #define SPHERES_GRID_SIZE 9
-#define SPHERE_COUNT (SPHERES_GRID_SIZE * 2 * SPHERES_GRID_SIZE * 2) + 1
+#define SPHERE_COUNT (SPHERES_GRID_SIZE * 2 * SPHERES_GRID_SIZE * 2) + 1 + 3
 
 // TODO: Should probably be in the camera class itself
 #define CAMERA_METERS_PER_SECOND 1.0
@@ -140,9 +140,9 @@ __global__ void create_world(curandState* rand_state, Sphere** spheres, Hittable
                 }
             }
         }
-        //spheres[i++] = new Sphere(Vec3f32(0, 1, 0), 1, Material::dieletric(1.5));
-        //spheres[i++] = new Sphere(Vec3f32(-4, 1, 0), 1, Material::lambertian(Vec3f32(0.4, 0.2, 0.1)));
-        //spheres[i++] = new Sphere(Vec3f32(4, 1, 0), 1, Material::metal(Vec3f32(0.7, 0.6, 0.5), 0.0));
+        spheres[i++] = new Sphere(Vec3f32(0, 1, 0), 1, Material::dieletric(1.5));
+        spheres[i++] = new Sphere(Vec3f32(-4, 1, 0), 1, Material::lambertian(Vec3f32(0.4, 0.2, 0.1)));
+        spheres[i++] = new Sphere(Vec3f32(4, 1, 0), 1, Material::metal(Vec3f32(0.7, 0.6, 0.5), 0.0));
 
         assert(SPHERE_COUNT == i);
         *hittables = new HittableList(spheres, i);
