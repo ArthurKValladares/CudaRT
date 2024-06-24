@@ -83,8 +83,7 @@ __global__ void render_init(int max_x, int max_y, curandState* rand_state) {
     int flipped_j = max_y - 1 - j;
     int pixel_index = flipped_j * max_x + i;
     const unsigned long long seed = 1984;
-    const unsigned long long offset = 0;
-    curand_init(seed, pixel_index, offset, &rand_state[pixel_index]);
+    curand_init(seed + pixel_index, 0, 0, &rand_state[pixel_index]);
 }
 
 __global__ void render(HittableList** hittables, curandState* rand_state, int ns, Uint32* fb, int max_x, int max_y, Camera** cam) {
