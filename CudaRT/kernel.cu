@@ -19,7 +19,7 @@
 #define MAX_BOUNCE_DEPTH 5
 #define SAMPLES_PER_PIXEL 15
 
-#define SPHERES_GRID_SIZE 9
+#define SPHERES_GRID_SIZE 15
 #define SPHERE_COUNT (SPHERES_GRID_SIZE * 2 * SPHERES_GRID_SIZE * 2) + 1 + 3
 
 // TODO: Should probably be in the camera class itself
@@ -110,9 +110,7 @@ __global__ void create_world(curandState* rand_state, Sphere** spheres, Hittable
     if (threadIdx.x == 0 && blockIdx.x == 0) {
         int i = 0;
 
-        spheres[i++] = new Sphere(Vec3f32(0, -1000.0, -1), 1000,
-            Material::lambertian(Vec3f32(0.5, 0.5, 0.)));
-
+        spheres[i++] = new Sphere(Vec3f32(0, -1000.0, -1), 1000, Material::lambertian(Vec3f32(0.5, 0.5, 0.)));
         for (int a = -SPHERES_GRID_SIZE; a < SPHERES_GRID_SIZE; a++) {
             for (int b = -SPHERES_GRID_SIZE; b < SPHERES_GRID_SIZE; b++) {
                 const float choose_material = random_float(rand_state);
@@ -233,7 +231,7 @@ int main() {
 
     // TODO: Better create/free_world functions
     Sphere** spheres;
-    checkCudaErrors(cudaMalloc(&spheres, SPHERE_COUNT * sizeof(Sphere*)));
+    checkCudaErrors(cudaMalloc(&spheres, (SPHERE_COUNT + 1) * sizeof(Sphere*)));
     HittableList** hittables;
     checkCudaErrors(cudaMalloc(&hittables, sizeof(HittableList*)));
     Camera** d_camera;
