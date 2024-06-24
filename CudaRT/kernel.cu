@@ -239,6 +239,7 @@ int main() {
 
     create_world << <1, 1 >> > (d_rand_state, spheres, hittables, d_camera, nx, ny);
 
+    printf("Starting Rendering!\n");
     double timer_seconds = 0.0;
     bool quit = false;
     while (!quit) {
