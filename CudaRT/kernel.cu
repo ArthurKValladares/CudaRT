@@ -19,11 +19,12 @@
 #define MAX_BOUNCE_DEPTH 5
 #define SAMPLES_PER_PIXEL 15
 
-#define SPHERES_GRID_SIZE 15
+#define SPHERES_GRID_SIZE 0
 #define SPHERE_COUNT (SPHERES_GRID_SIZE * 2 * SPHERES_GRID_SIZE * 2) + 1 + 3
 
 // TODO: Should probably be in the camera class itself
-#define CAMERA_METERS_PER_SECOND 1.0
+#define CAMERA_DEFAULT_METERS_PER_SECOND 1.0
+#define CAMERA_SPEED_DELTA 0.5
 
 __device__ Vec3f32 color(curandState* local_rand_state, HittableList** hittables, const Ray& r) {
     Ray cur_ray = r;
@@ -239,10 +240,11 @@ int main() {
     create_world << <1, 1 >> > (d_rand_state, spheres, hittables, d_camera, nx, ny);
 
     printf("Starting Rendering!\n");
+    float camera_meters_per_second = CAMERA_DEFAULT_METERS_PER_SECOND;
     double timer_seconds = 0.0;
     bool quit = false;
     while (!quit) {
-        const float displacement = CAMERA_METERS_PER_SECOND * timer_seconds;
+        const float displacement = camera_meters_per_second * timer_seconds;
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
             switch (e.type) {
@@ -274,6 +276,17 @@ int main() {
                         }
                         case SDLK_LSHIFT: {
                             update_camera << <1, 1 >> > (d_camera, Vec3f32(0.0, -displacement, 0.0));
+                            break;
+                        }
+                        // '+'
+                        case SDLK_EQUALS: {
+                            camera_meters_per_second += CAMERA_SPEED_DELTA;
+                            break;
+                        }
+                        case SDLK_MINUS: {
+                            if (camera_meters_per_second - CAMERA_SPEED_DELTA > 0.) {
+                                camera_meters_per_second -= CAMERA_SPEED_DELTA;
+                            }
                             break;
                         }
                         default: {
