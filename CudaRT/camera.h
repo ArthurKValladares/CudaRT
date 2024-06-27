@@ -19,6 +19,14 @@ public:
         vertical = 2.0f * half_height * focus_dist * up;
     }
 
+    __device__ Vec3f32 front_movement_vector() const {
+        return unit_vector(front.with_y(0.));
+    }
+
+    __device__ Vec3f32 rioght_movement_vector() const {
+        return unit_vector(right.with_y(0.));
+    }
+
     __device__ void update_position(Vec3f32 disp) {
         origin += disp;
     }

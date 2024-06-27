@@ -12,12 +12,38 @@ class Vec3f32 {
 public:
     __host__ __device__ Vec3f32() {}
     __host__ __device__ Vec3f32(float e0, float e1, float e2) { e[0] = e0; e[1] = e1; e[2] = e2; }
+
     __host__ __device__ inline float x() const { return e[0]; }
     __host__ __device__ inline float y() const { return e[1]; }
     __host__ __device__ inline float z() const { return e[2]; }
     __host__ __device__ inline float r() const { return e[0]; }
     __host__ __device__ inline float g() const { return e[1]; }
     __host__ __device__ inline float b() const { return e[2]; }
+
+    __host__ __device__ inline Vec3f32 with_x(float v) const {
+        Vec3f32 temp = *this; 
+        temp[0] = v; 
+        return temp;
+    }
+    __host__ __device__ inline Vec3f32 with_y(float v) const {
+        Vec3f32 temp = *this;
+        temp[1] = v; 
+        return temp;
+    }
+    __host__ __device__ inline Vec3f32 with_z(float v) const {
+        Vec3f32 temp = *this;
+        temp[2] = v; 
+        return temp;
+    }
+    __host__ __device__ inline Vec3f32 with_r(float v) const {
+        return with_x(v);
+    }
+    __host__ __device__ inline Vec3f32 with_g(float v) const {
+        return with_y(v);
+    }
+    __host__ __device__ inline Vec3f32 with_b(float v) const {
+        return with_z(v);
+    }
 
     __host__ __device__ inline const Vec3f32& operator+() const { return *this; }
     __host__ __device__ inline Vec3f32 operator-() const { return Vec3f32(-e[0], -e[1], -e[2]); }
