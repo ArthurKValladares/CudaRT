@@ -11,12 +11,12 @@ public:
         float half_height = tan(theta / 2.0f);
         float half_width = aspect * half_height;
         origin = lookfrom;
-        w = unit_vector(lookfrom - lookat);
-        u = unit_vector(cross(vup, w));
-        v = cross(w, u);
-        lower_left_corner = origin - half_width * focus_dist * u - half_height * focus_dist * v - focus_dist * w;
-        horizontal = 2.0f * half_width * focus_dist * u;
-        vertical = 2.0f * half_height * focus_dist * v;
+        front = unit_vector(lookfrom - lookat);
+        right = unit_vector(cross(vup, front));
+        up = cross(front, right);
+        lower_left_corner = origin - half_width * focus_dist * right - half_height * focus_dist * up - focus_dist * front;
+        horizontal = 2.0f * half_width * focus_dist * right;
+        vertical = 2.0f * half_height * focus_dist * up;
     }
 
     __device__ void update_position(Vec3f32 disp) {
@@ -25,7 +25,7 @@ public:
 
     __device__ Ray get_ray(float s, float t, curandState* rand_state) {
         Vec3f32 rd = lens_radius * random_in_unit_disk(rand_state);
-        Vec3f32 offset = u * rd.x() + v * rd.y();
+        Vec3f32 offset = right * rd.x() + up * rd.y();
         return Ray(origin + offset, lower_left_corner + s * horizontal + t * vertical - origin - offset);
     }
 
@@ -33,6 +33,6 @@ public:
     Vec3f32 lower_left_corner;
     Vec3f32 horizontal;
     Vec3f32 vertical;
-    Vec3f32 u, v, w;
+    Vec3f32 right, up, front;
     float lens_radius;
 };
