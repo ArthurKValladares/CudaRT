@@ -121,7 +121,7 @@ __global__ void create_world(curandState* rand_state, Sphere** spheres, Hittable
                     const float g = random_float(rand_state) * random_float(rand_state);
                     const float b = random_float(rand_state) * random_float(rand_state);
 
-                    const Vec3f32 center2 = center + Vec3f32(0.0, random_float(rand_state) * 0.5, 0.0);
+                    const Vec3f32 center2 = center + Vec3f32(0.0, random_float(rand_state, 0.0, 0.5), 0.0);
                     spheres[i++] = new Sphere(center, center2, 0.2,
                         Material::lambertian(Vec3f32(r, g, b)));
                 }
