@@ -22,5 +22,6 @@ __device__ float random_float(curandState* rand_state) {
 }
 
 __device__ float random_float(curandState* rand_state, float min, float max) {
-	return lerp(min, max, random_float(rand_state));
+	const float t = curand_uniform(rand_state);
+	return (1.0 - t) * min + t * max;
 }

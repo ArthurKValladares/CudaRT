@@ -1,6 +1,11 @@
-﻿  Compiling CUDA source file kernel.cu...
+﻿  Compiling CUDA source file defs.cu...
+  Compiling CUDA source file kernel.cu...
+  
+  C:\Users\Arthur\Documents\projects\cudart\CudaRT>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\bin\nvcc.exe" -gencode=arch=compute_52,code=\"sm_52,compute_52\" --use-local-env -ccbin "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.36.32532\bin\HostX64\x64" -x cu   -IC:\Users\Arthur\Documents\projects\cudart\CudaRT\vendor\SDL\include -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\include"     --keep-dir CudaRT\x64\Release  -maxrregcount=0   --machine 64 --compile -cudart static    -DWIN32 -DWIN64 -DNDEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /O2 /FS   /MD " -Xcompiler "/FdCudaRT\x64\Release\vc143.pdb" -o C:\Users\Arthur\Documents\projects\cudart\CudaRT\CudaRT\x64\Release\defs.cu.obj "C:\Users\Arthur\Documents\projects\cudart\CudaRT\defs.cu" 
   
   C:\Users\Arthur\Documents\projects\cudart\CudaRT>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\bin\nvcc.exe" -gencode=arch=compute_52,code=\"sm_52,compute_52\" --use-local-env -ccbin "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.36.32532\bin\HostX64\x64" -x cu   -IC:\Users\Arthur\Documents\projects\cudart\CudaRT\vendor\SDL\include -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\include"     --keep-dir CudaRT\x64\Release  -maxrregcount=0   --machine 64 --compile -cudart static    -DWIN32 -DWIN64 -DNDEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /O2 /FS   /MD " -Xcompiler "/FdCudaRT\x64\Release\vc143.pdb" -o C:\Users\Arthur\Documents\projects\cudart\CudaRT\CudaRT\x64\Release\kernel.cu.obj "C:\Users\Arthur\Documents\projects\cudart\CudaRT\kernel.cu" 
+  defs.cu
+  tmpxft_0000489c_00000000-7_defs.cudafe1.cpp
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\material.h(120): warning #940-D: missing return statement at end of non-void function "Material::scatter"
         }
         ^
@@ -11,23 +16,13 @@ C:\Users\Arthur\Documents\projects\cudart\CudaRT\kernel.cu(184): warning #177-D:
         size_t fb_size = num_pixels * sizeof(Vec3f32);
                ^
   
-C:\Users\Arthur\Documents\projects\cudart\CudaRT\math.h(13): warning #174-D: expression has no effect
-    	(1.0 - t) * a + t * b;
-    	^
-            detected during instantiation of "T lerp(T, T, float) [with T=float]" at line 25
-  
-C:\Users\Arthur\Documents\projects\cudart\CudaRT\math.h(14): warning #940-D: missing return statement at end of non-void function "lerp(T, T, float) [with T=float]"
-    }
-    ^
-            detected during instantiation of "T lerp(T, T, float) [with T=float]" at line 25
-  
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\math.h(14): warning #940-D: missing return statement at end of non-void function "lerp(T, T, float) [with T=Vec3f32]"
     }
     ^
             detected during instantiation of "T lerp(T, T, float) [with T=Vec3f32]" at line 48 of C:\Users\Arthur\Documents\projects\cudart\CudaRT\kernel.cu
   
   kernel.cu
-  tmpxft_00004fa8_00000000-7_kernel.cudafe1.cpp
+  tmpxft_00004080_00000000-7_kernel.cudafe1.cpp
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\vec3.h(86): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\vec3.h(165): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\kernel.cu(248): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
