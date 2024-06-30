@@ -16,10 +16,10 @@
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
 
-#define MAX_BOUNCE_DEPTH 5
-#define SAMPLES_PER_PIXEL 15
+#define MAX_BOUNCE_DEPTH 15
+#define SAMPLES_PER_PIXEL 50
 
-#define SPHERES_GRID_SIZE 0
+#define SPHERES_GRID_SIZE 4
 #define SPHERE_COUNT (SPHERES_GRID_SIZE * 2 * SPHERES_GRID_SIZE * 2) + 1 + 3
 
 // TODO: Should probably be in the camera class itself
@@ -121,7 +121,8 @@ __global__ void create_world(curandState* rand_state, Sphere** spheres, Hittable
                     const float g = random_float(rand_state) * random_float(rand_state);
                     const float b = random_float(rand_state) * random_float(rand_state);
 
-                    spheres[i++] = new Sphere(center, 0.2,
+                    const Vec3f32 center2 = center + Vec3f32(0.0, random_float(rand_state) * 0.5, 0.0);
+                    spheres[i++] = new Sphere(center, center2, 0.2,
                         Material::lambertian(Vec3f32(r, g, b)));
                 }
                 else if (choose_material < 0.95f) {

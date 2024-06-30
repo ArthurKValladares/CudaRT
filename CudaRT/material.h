@@ -84,14 +84,14 @@ struct Material {
             if (scatter_direction.near_zero())
                 scatter_direction = rec.normal;
 
-            scattered = Ray(rec.p, scatter_direction);
+            scattered = Ray(rec.p, scatter_direction, r_in.time());
             attenuation = data.payload.lambertian.albedo;
             return true;
         }
         case MaterialType::Metal: {
             Vec3f32 reflected = reflect(r_in.direction(), rec.normal);
             reflected = unit_vector(reflected) + (data.payload.metal.fuzz * random_unit_vector(rand_state));
-            scattered = Ray(rec.p, reflected);
+            scattered = Ray(rec.p, reflected, r_in.time());
             attenuation = data.payload.metal.albedo;
             return (dot(scattered.direction(), rec.normal) > 0);
         }
@@ -113,7 +113,7 @@ struct Material {
                 direction = refract(unit_direction, rec.normal, ri);
             }
 
-            scattered = Ray(rec.p, direction);
+            scattered = Ray(rec.p, direction, r_in.time());
             return true;
         }
         }

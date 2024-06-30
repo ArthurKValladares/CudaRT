@@ -11,10 +11,20 @@ public:
 		: center(center)
 		, radius(radius)
         , material(material)
+        , is_moving(false)
 	{}
 
+    __device__ Sphere(const Vec3f32& center1, const Vec3f32& center2, float radius, Material material)
+        : center(center1)
+        , radius(radius)
+        , material(material)
+        , is_moving(true)
+    {
+        center_vec = center2 - center1;
+    }
+
     __device__ bool hit(const Ray& r, double ray_tmin, double ray_tmax, HitRecord& rec) const {
-        Vec3f32 oc = center - r.origin();
+        Vec3f32 oc = (is_moving ? sphere_center(r.time()) : center) - r.origin();
         auto a = r.direction().squared_length();
         auto h = dot(r.direction(), oc);
         auto c = oc.squared_length() - radius * radius;
@@ -44,7 +54,13 @@ public:
 	}
 
 private:
+    __device__ Vec3f32 sphere_center(float time) const {
+        return center + center_vec * time;
+    }
+
 	Vec3f32 center;
 	float radius;
     Material material;
+    bool is_moving;
+    Vec3f32 center_vec;
 };
