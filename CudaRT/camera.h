@@ -23,7 +23,7 @@ public:
         return unit_vector(front.with_y(0.));
     }
 
-    __host__ __device__ Vec3f32 rioght_movement_vector() const {
+    __host__ __device__ Vec3f32 right_movement_vector() const {
         return unit_vector(right.with_y(0.));
     }
 

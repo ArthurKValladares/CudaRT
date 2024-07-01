@@ -16,14 +16,14 @@
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
 
-#define MAX_BOUNCE_DEPTH 15
-#define SAMPLES_PER_PIXEL 25
+#define MAX_BOUNCE_DEPTH 5
+#define SAMPLES_PER_PIXEL 15
 
-#define SPHERES_GRID_SIZE 4
+#define SPHERES_GRID_SIZE 0
 #define SPHERE_COUNT (SPHERES_GRID_SIZE * 2 * SPHERES_GRID_SIZE * 2) + 1 + 3
 
 // TODO: Should probably be in the camera class itself
-#define CAMERA_DEFAULT_METERS_PER_SECOND 1.0
+#define CAMERA_DEFAULT_METERS_PER_SECOND 15.0
 #define CAMERA_SPEED_DELTA 0.5
 
 __device__ Vec3f32 color(curandState* local_rand_state, HittableList** hittables, const Ray& r) {
@@ -235,7 +235,7 @@ int main() {
     checkCudaErrors(cudaMalloc(&hittables, sizeof(HittableList*)));
     Camera* d_camera;
     checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(Camera)));
-    float *h_camera = (float *)malloc(sizeof(Camera));
+    Camera* h_camera = (Camera*) malloc(sizeof(Camera));
 
     create_world << <1, 1 >> > (d_rand_state, spheres, hittables, d_camera, nx, ny);
 
@@ -244,7 +244,7 @@ int main() {
     double timer_seconds = 0.0;
     bool quit = false;
     while (!quit) {
-        //checkCudaErrors(cudaMemcpy(h_camera, d_camera, sizeof(Camera), cudaMemcpyDeviceToHost));
+        checkCudaErrors(cudaMemcpy(h_camera, d_camera, sizeof(Camera), cudaMemcpyDeviceToHost));
 
         const float displacement = camera_meters_per_second * timer_seconds;
         SDL_Event e;
@@ -257,19 +257,19 @@ int main() {
                             break;
                         }
                         case SDLK_w: {
-                            update_camera << <1, 1 >> > (d_camera, Vec3f32(displacement, 0.0, 0.0));
+                            update_camera << <1, 1 >> > (d_camera, displacement * h_camera->front_movement_vector());
                             break;
                         }
                         case SDLK_a: {
-                            update_camera << <1, 1 >> > (d_camera, Vec3f32(0.0, 0.0, -displacement));
+                            update_camera << <1, 1 >> > (d_camera, -displacement * h_camera->right_movement_vector());
                             break;
                         }
                         case SDLK_s: {
-                            update_camera << <1, 1 >> > (d_camera, Vec3f32(-displacement, 0.0, 0.0));
+                            update_camera << <1, 1 >> > (d_camera, -displacement * h_camera->front_movement_vector());
                             break;
                         }
                         case SDLK_d: {
-                            update_camera << <1, 1 >> > (d_camera, Vec3f32(0.0, 0.0, displacement));
+                            update_camera << <1, 1 >> > (d_camera, displacement * h_camera->right_movement_vector());
                             break;
                         }
                         case SDLK_SPACE: {
