@@ -181,7 +181,6 @@ int main() {
     int ny = 1200 / 3;
 
     int num_pixels = nx * ny;
-    size_t fb_size = num_pixels * sizeof(Vec3f32);
 
     const size_t surface_buffer_size = nx * ny * sizeof(Uint32);
 
@@ -236,7 +235,8 @@ int main() {
     HittableList** hittables;
     checkCudaErrors(cudaMalloc(&hittables, sizeof(HittableList*)));
     Camera** d_camera;
-    checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(Camera*)));
+    checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(Camera)));
+    float *h_camera = (float *)malloc(sizeof(Camera));
 
     create_world << <1, 1 >> > (d_rand_state, spheres, hittables, d_camera, nx, ny);
 
@@ -245,6 +245,8 @@ int main() {
     double timer_seconds = 0.0;
     bool quit = false;
     while (!quit) {
+        //checkCudaErrors(cudaMemcpy(h_camera, d_camera, sizeof(Camera), cudaMemcpyDeviceToHost));
+
         const float displacement = camera_meters_per_second * timer_seconds;
         SDL_Event e;
         while (SDL_PollEvent(&e)) {

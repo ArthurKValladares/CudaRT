@@ -10,7 +10,7 @@
 
 template<class T>
 __host__ __device__ T lerp(T a, T b, float t) {
-	(1.0 - t) * a + t * b;
+	return (1.0 - t) * a + t * b;
 }
 
 __host__ __device__ inline double degrees_to_radians(double degrees) {
@@ -23,5 +23,5 @@ __device__ float random_float(curandState* rand_state) {
 
 __device__ float random_float(curandState* rand_state, float min, float max) {
 	const float t = curand_uniform(rand_state);
-	return (1.0 - t) * min + t * max;
+	return lerp(min, max, t);
 }
