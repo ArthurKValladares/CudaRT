@@ -1,11 +1,6 @@
-﻿  Compiling CUDA source file defs.cu...
-  Compiling CUDA source file kernel.cu...
-  
-  C:\Users\Arthur\Documents\projects\cudart\CudaRT>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\bin\nvcc.exe" -gencode=arch=compute_52,code=\"sm_52,compute_52\" --use-local-env -ccbin "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.36.32532\bin\HostX64\x64" -x cu   -IC:\Users\Arthur\Documents\projects\cudart\CudaRT\vendor\SDL\include -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\include"  -G   --keep-dir CudaRT\x64\Debug  -maxrregcount=0   --machine 64 --compile -cudart static  -g  -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -Xcompiler "/FdCudaRT\x64\Debug\vc143.pdb" -o C:\Users\Arthur\Documents\projects\cudart\CudaRT\CudaRT\x64\Debug\defs.cu.obj "C:\Users\Arthur\Documents\projects\cudart\CudaRT\defs.cu" 
+﻿  Compiling CUDA source file kernel.cu...
   
   C:\Users\Arthur\Documents\projects\cudart\CudaRT>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\bin\nvcc.exe" -gencode=arch=compute_52,code=\"sm_52,compute_52\" --use-local-env -ccbin "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.36.32532\bin\HostX64\x64" -x cu   -IC:\Users\Arthur\Documents\projects\cudart\CudaRT\vendor\SDL\include -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\include"  -G   --keep-dir CudaRT\x64\Debug  -maxrregcount=0   --machine 64 --compile -cudart static  -g  -DWIN32 -DWIN64 -D_DEBUG -D_CONSOLE -D_MBCS -Xcompiler "/EHsc /W3 /nologo /Od /FS /Zi /RTC1 /MDd " -Xcompiler "/FdCudaRT\x64\Debug\vc143.pdb" -o C:\Users\Arthur\Documents\projects\cudart\CudaRT\CudaRT\x64\Debug\kernel.cu.obj "C:\Users\Arthur\Documents\projects\cudart\CudaRT\kernel.cu" 
-  defs.cu
-  tmpxft_00003fb4_00000000-7_defs.cudafe1.cpp
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\material.h(120): warning #940-D: missing return statement at end of non-void function "Material::scatter"
         }
         ^
@@ -13,11 +8,9 @@ C:\Users\Arthur\Documents\projects\cudart\CudaRT\material.h(120): warning #940-D
   Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
   
   kernel.cu
-  tmpxft_00001b28_00000000-7_kernel.cudafe1.cpp
+  tmpxft_00003698_00000000-7_kernel.cudafe1.cpp
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\vec3.h(86): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\vec3.h(165): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Arthur\Documents\projects\cudart\CudaRT\kernel.cu(250): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Arthur\Documents\projects\cudart\CudaRT\kernel.cu(250): warning C4244: 'initializing': conversion from 'double' to 'const float', possible loss of data
-     Creating library C:\Users\Arthur\Documents\projects\cudart\CudaRT\x64\Debug\CudaRT.lib and object C:\Users\Arthur\Documents\projects\cudart\CudaRT\x64\Debug\CudaRT.exp
-LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
+C:\Users\Arthur\Documents\projects\cudart\CudaRT\kernel.cu(249): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Arthur\Documents\projects\cudart\CudaRT\kernel.cu(249): warning C4244: 'initializing': conversion from 'double' to 'const float', possible loss of data
   CudaRT.vcxproj -> C:\Users\Arthur\Documents\projects\cudart\CudaRT\x64\Debug\CudaRT.exe
