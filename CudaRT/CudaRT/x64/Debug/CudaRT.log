@@ -8,7 +8,7 @@ C:\Users\Arthur\Documents\projects\cudart\CudaRT\material.h(120): warning #940-D
   Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
   
   kernel.cu
-  tmpxft_00002754_00000000-7_kernel.cudafe1.cpp
+  tmpxft_00002584_00000000-7_kernel.cudafe1.cpp
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\vec3.h(86): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\vec3.h(165): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\kernel.cu(248): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data

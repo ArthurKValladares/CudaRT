@@ -217,8 +217,8 @@ int main() {
     }
     SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
 
-    Uint32* surface_buffer;
-    checkCudaErrors(cudaMalloc(&surface_buffer, surface_buffer_size));
+    Uint32* d_surface_buffer;
+    checkCudaErrors(cudaMalloc(&d_surface_buffer, surface_buffer_size));
 
     curandState* d_rand_state;
     checkCudaErrors(cudaMalloc((void**)&d_rand_state, num_pixels * sizeof(curandState)));
@@ -228,15 +228,15 @@ int main() {
     checkCudaErrors(cudaDeviceSynchronize());
 
     // TODO: Better create/free_world functions
-    Sphere** spheres;
-    checkCudaErrors(cudaMalloc(&spheres, (SPHERE_COUNT + 1) * sizeof(Sphere*)));
-    HittableList* hittables;
-    checkCudaErrors(cudaMalloc((void**)&hittables, sizeof(HittableList)));
+    Sphere** d_spheres;
+    checkCudaErrors(cudaMalloc(&d_spheres, (SPHERE_COUNT + 1) * sizeof(Sphere*)));
+    HittableList* d_hittables;
+    checkCudaErrors(cudaMalloc((void**)&d_hittables, sizeof(HittableList)));
     Camera* d_camera;
     checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(Camera)));
     Camera* h_camera = (Camera*) malloc(sizeof(Camera));
 
-    create_world << <1, 1 >> > (d_rand_state, spheres, hittables, d_camera, nx, ny);
+    create_world << <1, 1 >> > (d_rand_state, d_spheres, d_hittables, d_camera, nx, ny);
 
     printf("Starting Rendering!\n");
     float camera_meters_per_second = CAMERA_DEFAULT_METERS_PER_SECOND;
@@ -311,14 +311,14 @@ int main() {
             start = clock();
 
             render << <blocks, threads >> > (
-                hittables,
+                d_hittables,
                 d_rand_state, SAMPLES_PER_PIXEL,
-                surface_buffer, nx, ny,
+                d_surface_buffer, nx, ny,
                 d_camera
             );
             checkCudaErrors(cudaGetLastError());
             checkCudaErrors(cudaDeviceSynchronize());
-            checkCudaErrors(cudaMemcpy(surface->pixels, surface_buffer, surface_buffer_size, cudaMemcpyDeviceToHost));
+            checkCudaErrors(cudaMemcpy(surface->pixels, d_surface_buffer, surface_buffer_size, cudaMemcpyDeviceToHost));
 
             stop = clock();
             timer_seconds = ((double)(stop - start)) / CLOCKS_PER_SEC;
@@ -337,11 +337,11 @@ int main() {
 
     // Cleanup
     checkCudaErrors(cudaDeviceSynchronize());
-    free_world << <1, 1 >> > (spheres);
+    free_world << <1, 1 >> > (d_spheres);
     checkCudaErrors(cudaGetLastError());
     checkCudaErrors(cudaFree(d_rand_state));
-    checkCudaErrors(cudaFree(surface_buffer));
-    checkCudaErrors(cudaFree(hittables));
+    checkCudaErrors(cudaFree(d_surface_buffer));
+    checkCudaErrors(cudaFree(d_hittables));
     checkCudaErrors(cudaFree(d_camera));
 
     SDL_DestroyWindow(window);
