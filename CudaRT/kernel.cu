@@ -26,12 +26,12 @@
 #define CAMERA_DEFAULT_METERS_PER_SECOND 15.0
 #define CAMERA_SPEED_DELTA 0.5
 
-__device__ Vec3f32 color(curandState* local_rand_state, HittableList** hittables, const Ray& r) {
+__device__ Vec3f32 color(curandState* local_rand_state, HittableList* hittables, const Ray& r) {
     Ray cur_ray = r;
     Vec3f32 cur_attenuation = Vec3f32(1.0, 1.0, 1.0);
     for (int i = 0; i < MAX_BOUNCE_DEPTH; i++) {
         HitRecord rec;
-        if ((*hittables)->hit(cur_ray, 0.001f, FLT_MAX, rec)) {
+        if (hittables->hit(cur_ray, 0.001f, FLT_MAX, rec)) {
             Ray scattered;
             Vec3f32 attenuation;
             if (rec.material->scatter(cur_ray, rec, attenuation, scattered, local_rand_state)) {
@@ -87,7 +87,7 @@ __global__ void render_init(int max_x, int max_y, curandState* rand_state) {
     curand_init(seed + pixel_index, 0, 0, &rand_state[pixel_index]);
 }
 
-__global__ void render(HittableList** hittables, curandState* rand_state, int ns, Uint32* fb, int max_x, int max_y, Camera* cam) {
+__global__ void render(HittableList* hittables, curandState* rand_state, int ns, Uint32* fb, int max_x, int max_y, Camera* cam) {
     int i = threadIdx.x + blockIdx.x * blockDim.x;
     int j = threadIdx.y + blockIdx.y * blockDim.y;
     if ((i >= max_x) || (j >= max_y)) return;
@@ -106,7 +106,7 @@ __global__ void render(HittableList** hittables, curandState* rand_state, int ns
     fb[pixel_index] = vec3_to_color(col / float(ns));
 }
 
-__global__ void create_world(curandState* rand_state, Sphere** spheres, HittableList** hittables, Camera* d_camera, int nx, int ny) {
+__global__ void create_world(curandState* rand_state, Sphere** spheres, HittableList* hittables, Camera* d_camera, int nx, int ny) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
         int i = 0;
 
@@ -144,7 +144,7 @@ __global__ void create_world(curandState* rand_state, Sphere** spheres, Hittable
         spheres[i++] = new Sphere(Vec3f32(4, 1, 0), 1, Material::metal(Vec3f32(0.7, 0.6, 0.5), 0.0));
 
         assert(SPHERE_COUNT == i);
-        *hittables = new HittableList(spheres, i);
+        *hittables = HittableList(spheres, i);
 
         Vec3f32 origin(13, 3, 3);
         Vec3f32 look_at(0, 0, 0);
@@ -162,11 +162,10 @@ __global__ void create_world(curandState* rand_state, Sphere** spheres, Hittable
     }
 }
 
-__global__ void free_world(Sphere** spheres, HittableList** hittables) {
+__global__ void free_world(Sphere** spheres) {
     for (int i = 0; i < SPHERE_COUNT; ++i) {
         delete spheres[i];
     }
-    delete* hittables;
 }
 
 __global__ void update_camera(Camera* d_camera, Vec3f32 displacement) {
@@ -231,8 +230,8 @@ int main() {
     // TODO: Better create/free_world functions
     Sphere** spheres;
     checkCudaErrors(cudaMalloc(&spheres, (SPHERE_COUNT + 1) * sizeof(Sphere*)));
-    HittableList** hittables;
-    checkCudaErrors(cudaMalloc(&hittables, sizeof(HittableList*)));
+    HittableList* hittables;
+    checkCudaErrors(cudaMalloc((void**)&hittables, sizeof(HittableList)));
     Camera* d_camera;
     checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(Camera)));
     Camera* h_camera = (Camera*) malloc(sizeof(Camera));
@@ -338,10 +337,11 @@ int main() {
 
     // Cleanup
     checkCudaErrors(cudaDeviceSynchronize());
-    free_world << <1, 1 >> > (spheres, hittables);
+    free_world << <1, 1 >> > (spheres);
     checkCudaErrors(cudaGetLastError());
     checkCudaErrors(cudaFree(d_rand_state));
     checkCudaErrors(cudaFree(surface_buffer));
+    checkCudaErrors(cudaFree(hittables));
     checkCudaErrors(cudaFree(d_camera));
 
     SDL_DestroyWindow(window);
