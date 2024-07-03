@@ -44,6 +44,15 @@ struct Renderable {
 		};
 	}
 
+
+	__device__ bool hit(const Ray& r, float t_min, float t_max, HitRecord& rec) const {
+		switch (data.type) {
+			case RenderableType::Sphere : {
+				return data.payload.sphere.hit(r, t_min, t_max, rec);
+			}
+		}
+	}
+
 private:
 	RenderableData data;
 };

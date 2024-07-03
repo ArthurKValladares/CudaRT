@@ -7,10 +7,14 @@ C:\Users\Arthur\Documents\projects\cudart\CudaRT\material.h(120): warning #940-D
   
   Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
   
+C:\Users\Arthur\Documents\projects\cudart\CudaRT\renderable.h(54): warning #940-D: missing return statement at end of non-void function "Renderable::hit"
+    	}
+    	^
+  
   kernel.cu
-  tmpxft_000010b8_00000000-7_kernel.cudafe1.cpp
+  tmpxft_000035f4_00000000-7_kernel.cudafe1.cpp
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\vec3.h(86): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\vec3.h(165): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Arthur\Documents\projects\cudart\CudaRT\kernel.cu(248): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Arthur\Documents\projects\cudart\CudaRT\kernel.cu(248): warning C4244: 'initializing': conversion from 'double' to 'const float', possible loss of data
+C:\Users\Arthur\Documents\projects\cudart\CudaRT\kernel.cu(242): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Arthur\Documents\projects\cudart\CudaRT\kernel.cu(242): warning C4244: 'initializing': conversion from 'double' to 'const float', possible loss of data
   CudaRT.vcxproj -> C:\Users\Arthur\Documents\projects\cudart\CudaRT\x64\Debug\CudaRT.exe
