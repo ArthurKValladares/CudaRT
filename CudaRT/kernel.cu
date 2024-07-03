@@ -8,7 +8,7 @@
 #include "vec3.h"
 #include "ray.h"
 #include "math.h"
-#include "sphere.h"
+#include "renderable.h"
 #include "hittable_list.h"
 #include "camera.h"
 #include "material.h"
