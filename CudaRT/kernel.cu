@@ -12,6 +12,7 @@
 #include "hittable_list.h"
 #include "camera.h"
 #include "material.h"
+#include "aabb.h"
 
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
