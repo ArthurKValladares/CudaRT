@@ -11,6 +11,10 @@ public:
 		: hittables(hittables)
 		, list_size(size)
 	{
+		m_bounding_box = AABB();
+		for (int i = 0; i < list_size; ++i) {
+			m_bounding_box = AABB(m_bounding_box, hittables[i].bounding_box());
+		}
 	}
 
 	__device__ bool HittableList::hit(const Ray& r, float t_min, float t_max, HitRecord& rec) const {
@@ -27,7 +31,12 @@ public:
 		return hit_anything;
 	}
 
+	__device__ AABB bounding_box() const {
+		return m_bounding_box;
+	}
+
 private:
 	Renderable* hittables;
 	int list_size;
+	AABB m_bounding_box;
 };

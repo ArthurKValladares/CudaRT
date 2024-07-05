@@ -54,7 +54,7 @@ struct Renderable {
 		}
 	}
 
-	__device__ AABB bounding_box() {
+	__device__ AABB bounding_box() const {
 		switch (data.type) {
 			case RenderableType::Sphere: {
 				return data.payload.sphere.bounding_box();
