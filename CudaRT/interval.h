@@ -10,5 +10,16 @@ struct Interval {
 		max = a.max >= b.max ? a.max : b.max;
 	}
 
+	__device__ float clamp(float x) const {
+		if (x < min) return min;
+		if (x > max) return max;
+		return x;
+	}
+
+	__device__ Interval expand(float delta) const {
+		auto padding = delta / 2;
+		return Interval(min - padding, max + padding);
+	}
+
 	float min, max;
 };

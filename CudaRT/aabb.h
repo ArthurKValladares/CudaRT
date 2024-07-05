@@ -12,6 +12,11 @@ struct AABB {
         Y = (a[1] <= b[1]) ? Interval(a[1], b[1]) : Interval(b[1], a[1]);
         Z = (a[2] <= b[2]) ? Interval(a[2], b[2]) : Interval(b[2], a[2]);
     }
+    __device__ AABB(const AABB& box0, const AABB& box1) {
+        X = Interval(box0.X, box1.X);
+        Y = Interval(box0.Y, box1.Y);
+        Z = Interval(box0.Z, box1.Z);
+    }
 
     __device__ const Interval& axis_interval(int n) const {
         if (n == 1) return Y;
