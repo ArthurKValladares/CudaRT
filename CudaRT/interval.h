@@ -3,9 +3,9 @@
 #include "math.h"
 
 struct Interval {
-	__device__ Interval() : min(+INFINITY), max(-INFINITY) {}
-	__device__ Interval(float min, float max) : min(min), max(max) {}
-	__device__ Interval(const Interval& a, const Interval& b) {
+	__device__ __host__ Interval() : min(+INFINITY), max(-INFINITY) {}
+	__device__ __host__ Interval(float min, float max) : min(min), max(max) {}
+	__device__ __host__ Interval(const Interval& a, const Interval& b) {
 		min = a.min <= b.min ? a.min : b.min;
 		max = a.max >= b.max ? a.max : b.max;
 	}

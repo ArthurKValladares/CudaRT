@@ -90,6 +90,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aabb.h" />
+    <ClInclude Include="bvh_node.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="defs.h" />
     <ClInclude Include="hittable.h" />

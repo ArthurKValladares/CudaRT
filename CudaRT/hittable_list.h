@@ -3,8 +3,7 @@
 #include "hittable.h"
 #include "renderable.h"
 
-class HittableList {
-public:
+struct HittableList {
 	__device__ HittableList() = delete;
 
 	__device__ HittableList(Renderable* hittables, int size)
@@ -22,7 +21,7 @@ public:
 		bool hit_anything = false;
 		float closest_so_far = t_max;
 		for (int i = 0; i < list_size; i++) {
-			if (hittables[i].hit(r, t_min, closest_so_far, temp_rec)) {
+			if (hittables[i].hit(r, Interval(t_min, closest_so_far), temp_rec)) {
 				hit_anything = true;
 				closest_so_far = temp_rec.t;
 				rec = temp_rec;
@@ -31,11 +30,6 @@ public:
 		return hit_anything;
 	}
 
-	__device__ AABB bounding_box() const {
-		return m_bounding_box;
-	}
-
-private:
 	Renderable* hittables;
 	int list_size;
 	AABB m_bounding_box;

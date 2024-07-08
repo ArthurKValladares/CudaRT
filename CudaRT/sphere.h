@@ -8,7 +8,7 @@
 
 class Sphere {
 public:
-    __device__ Sphere(const Vec3f32& center, float radius, Material material)
+    __device__ __host__ Sphere(const Vec3f32& center, float radius, Material material)
 		: center(center)
 		, radius(radius)
         , material(material)
@@ -18,7 +18,7 @@ public:
         m_bounding_box = AABB(center - rvec, center + rvec);
     }
 
-    __device__ Sphere(const Vec3f32& center1, const Vec3f32& center2, float radius, Material material)
+    __device__ __host__ Sphere(const Vec3f32& center1, const Vec3f32& center2, float radius, Material material)
         : center(center1)
         , radius(radius)
         , material(material)
@@ -32,7 +32,9 @@ public:
         m_bounding_box = AABB(box1, box2);
     }
 
-    __device__ bool hit(const Ray& r, double ray_tmin, double ray_tmax, HitRecord& rec) const {
+    __device__ bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const {
+        const float ray_tmin = ray_t.min;
+        const float ray_tmax = ray_t.max;
         Vec3f32 oc = (is_moving ? sphere_center(r.time()) : center) - r.origin();
         auto a = r.direction().squared_length();
         auto h = dot(r.direction(), oc);

@@ -4,11 +4,13 @@
 #include "aabb.h"
 
 enum class RenderableType {
-	Sphere
+	Sphere,
+	BvhNode
 };
 
 union RenderablePayload {
 	Sphere sphere;
+	// TODO: Bvh node payload
 };
 
 struct RenderableData {
@@ -16,6 +18,7 @@ struct RenderableData {
 	RenderablePayload payload;
 };
 
+struct BvhNode;
 struct Renderable {
 	Renderable() = delete;
 
@@ -45,11 +48,27 @@ struct Renderable {
 		};
 	}
 
+	__host__ static Renderable BvhNode(BvhNode& node) {
+		// TODO: Figure this out
+		RenderablePayload payload = RenderablePayload{
+			 Sphere::Sphere(Vec3f32(), 0.0, Material::lambertian(Vec3f32()))
+		};
+		return Renderable{
+			RenderableData {
+				RenderableType::BvhNode,
+				payload
+			}
+		};
+	}
 
-	__device__ bool hit(const Ray& r, float t_min, float t_max, HitRecord& rec) const {
+	__device__ bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const {
 		switch (data.type) {
 			case RenderableType::Sphere : {
-				return data.payload.sphere.hit(r, t_min, t_max, rec);
+				return data.payload.sphere.hit(r, ray_t, rec);
+			}
+			case RenderableType::BvhNode: {
+				// TODO: Figure this out
+				return false;
 			}
 		}
 	}
@@ -58,6 +77,10 @@ struct Renderable {
 		switch (data.type) {
 			case RenderableType::Sphere: {
 				return data.payload.sphere.bounding_box();
+			}
+			case RenderableType::BvhNode: {
+				// TODO: Figure this out
+				return AABB();
 			}
 		}
 	}

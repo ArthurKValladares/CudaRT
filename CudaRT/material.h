@@ -39,7 +39,7 @@ struct Material {
 
     __device__ Material(MaterialData data) : data(data) {}
 
-    __device__ static Material lambertian(Vec3f32 albedo) {
+    __device__ __host__ static Material lambertian(Vec3f32 albedo) {
         MaterialPayload payload = {};
         payload.lambertian.albedo = albedo;
         return Material {
@@ -50,7 +50,7 @@ struct Material {
         };
     }
 
-    __device__ static Material metal(Vec3f32 albedo, float fuzz) {
+    __device__ __host__ static Material metal(Vec3f32 albedo, float fuzz) {
         MaterialPayload payload = {};
         payload.metal.albedo = albedo;
         payload.metal.fuzz = fuzz;
@@ -62,7 +62,7 @@ struct Material {
         };
     }
 
-    __device__ static Material dieletric(float refraction_index) {
+    __device__ __host__ static Material dieletric(float refraction_index) {
         MaterialPayload payload = {};
         payload.dieletric.refraction_index = refraction_index;
         return Material{
