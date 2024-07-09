@@ -6,6 +6,53 @@
 #include <vector>
 #include <algorithm>
 
+union BvhNodePayload {
+	Renderable* leaf;
+	BvhNode node;
+};
+
+struct BvhNodeData {
+	__host__ static BvhNodeData leaf(Renderable* renderable) {
+		BvhNodePayload payload = {};
+		payload.leaf = renderable;
+		return BvhNodeData{
+			true,
+			payload
+		};
+	}
+
+	__host__ static BvhNodeData node(BvhNode node) {
+		BvhNodePayload payload = {};
+		payload.node = node;
+		return BvhNodeData{
+			true,
+			payload
+		};
+	}
+
+	__device__ bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const {
+		if (is_leaf) {
+			return payload.leaf->hit(r, ray_t, rec);
+		}
+		else {
+			return payload.node.hit(r, ray_t, rec);
+		}
+	}
+
+	__device__ AABB bounding_box() const {
+		if (is_leaf) {
+			return payload.leaf->bounding_box();
+		}
+		else {
+			return payload.node.bounding_box();
+		}
+	}
+
+	bool is_leaf;
+	BvhNodePayload payload;
+};
+
+
 struct BvhNode {
 	// TODO: This part is actually  kinda hard, try to figure it out better later.
 	// For now, im  assuming all this data in on the CPU, and that I can modify it.
@@ -20,27 +67,22 @@ struct BvhNode {
 		size_t object_span = end - start;
 
 		if (object_span == 1) {
-			left = right = objects[start];
+			left = right = BvhNodeData::leaf(objects[start]);
 		}
 		else if (object_span == 2) {
-			left = objects[start];
-			right = objects[start + 1];
+			left = BvhNodeData::leaf(objects[start]);
+			right = BvhNodeData::leaf(objects[start + 1]);
 		}
 		else {
 			std::sort(objects.begin() + start, objects.begin() + end, comparator);
 
 			auto mid = start + object_span / 2;
 
-			left = (Renderable*)malloc(sizeof(Renderable));
-			// TODO: I know for sure this is wrong, just writting some stuff down
-			*left = Renderable::BvhNode(BvhNode(objects, start, mid));
-
-			right = (Renderable*)malloc(sizeof(Renderable));
-			// TODO: I know for sure this is wrong, just writting some stuff down
-			*right = Renderable::BvhNode(BvhNode(objects, mid, end));
+			left = BvhNodeData::node(BvhNode(objects, start, mid));
+			right = BvhNodeData::node(BvhNode(objects, mid, end));
 		}
 
-		bbox = AABB(left->bounding_box(), right->bounding_box());
+		bbox = AABB(left.bounding_box(), right.bounding_box());
 	}
 
 	__device__ bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const {
@@ -49,9 +91,9 @@ struct BvhNode {
 		}
 
 		
-		bool hit_left = left->hit(r, ray_t, rec);
+		bool hit_left = left.hit(r, ray_t, rec);
 		const Interval ray_interval = Interval(ray_t.min, hit_left ? rec.t : ray_t.max);
-		bool hit_right = right->hit(r, ray_interval, rec);
+		bool hit_right = right.hit(r, ray_interval, rec);
 
 		return hit_left || hit_right;
 	}
@@ -61,8 +103,8 @@ struct BvhNode {
 	}
 
 private:
-	Renderable* left;
-	Renderable* right;
+	BvhNodeData left;
+	BvhNodeData right;
 	AABB bbox;
 
 	static bool box_compare(
