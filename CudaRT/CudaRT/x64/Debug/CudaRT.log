@@ -7,18 +7,16 @@ C:\Users\Arthur\Documents\projects\cudart\CudaRT\material.h(120): warning #940-D
   
   Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
   
-C:\Users\Arthur\Documents\projects\cudart\CudaRT\renderable.h(54): warning #940-D: missing return statement at end of non-void function "Renderable::hit"
-    	}
-    	^
-  
-C:\Users\Arthur\Documents\projects\cudart\CudaRT\renderable.h(62): warning #940-D: missing return statement at end of non-void function "Renderable::bounding_box"
+C:\Users\Arthur\Documents\projects\cudart\CudaRT\renderable.h(53): warning #940-D: missing return statement at end of non-void function "Renderable::hit"
     	}
     	^
   
   kernel.cu
-  tmpxft_00002834_00000000-7_kernel.cudafe1.cpp
+  tmpxft_00002cb4_00000000-7_kernel.cudafe1.cpp
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\vec3.h(86): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\Arthur\Documents\projects\cudart\CudaRT\vec3.h(165): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Arthur\Documents\projects\cudart\CudaRT\kernel.cu(243): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Arthur\Documents\projects\cudart\CudaRT\kernel.cu(243): warning C4244: 'initializing': conversion from 'double' to 'const float', possible loss of data
+C:\Users\Arthur\Documents\projects\cudart\CudaRT\kernel.cu(242): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Arthur\Documents\projects\cudart\CudaRT\kernel.cu(242): warning C4244: 'initializing': conversion from 'double' to 'const float', possible loss of data
+     Creating library C:\Users\Arthur\Documents\projects\cudart\CudaRT\x64\Debug\CudaRT.lib and object C:\Users\Arthur\Documents\projects\cudart\CudaRT\x64\Debug\CudaRT.exp
+LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
   CudaRT.vcxproj -> C:\Users\Arthur\Documents\projects\cudart\CudaRT\x64\Debug\CudaRT.exe

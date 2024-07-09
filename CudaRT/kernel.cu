@@ -12,7 +12,6 @@
 #include "hittable_list.h"
 #include "camera.h"
 #include "material.h"
-#include "aabb.h"
 
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
@@ -222,11 +221,11 @@ int main() {
     checkCudaErrors(cudaGetLastError());
     checkCudaErrors(cudaDeviceSynchronize());
 
-
     Renderable* d_renderables;
     checkCudaErrors(cudaMalloc(&d_renderables, (SPHERE_COUNT + 1) * sizeof(Renderable)));
     HittableList* d_hittables;
     checkCudaErrors(cudaMalloc((void**)&d_hittables, sizeof(HittableList)));
+
     Camera* d_camera;
     checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(Camera)));
     Camera* h_camera = (Camera*) malloc(sizeof(Camera));

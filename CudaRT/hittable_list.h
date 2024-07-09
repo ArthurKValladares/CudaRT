@@ -10,10 +10,6 @@ struct HittableList {
 		: hittables(hittables)
 		, list_size(size)
 	{
-		m_bounding_box = AABB();
-		for (int i = 0; i < list_size; ++i) {
-			m_bounding_box = AABB(m_bounding_box, hittables[i].bounding_box());
-		}
 	}
 
 	__device__ bool HittableList::hit(const Ray& r, float t_min, float t_max, HitRecord& rec) const {
@@ -32,5 +28,4 @@ struct HittableList {
 
 	Renderable* hittables;
 	int list_size;
-	AABB m_bounding_box;
 };

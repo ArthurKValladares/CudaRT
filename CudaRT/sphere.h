@@ -4,7 +4,7 @@
 #include "ray.h"
 #include "hittable.h"
 #include "material.h"
-#include "aabb.h"
+#include "interval.h"
 
 class Sphere {
 public:
@@ -14,8 +14,6 @@ public:
         , material(material)
         , is_moving(false)
 	{
-        const Vec3f32 rvec = Vec3f32(radius, radius, radius);
-        m_bounding_box = AABB(center - rvec, center + rvec);
     }
 
     __device__ __host__ Sphere(const Vec3f32& center1, const Vec3f32& center2, float radius, Material material)
@@ -25,11 +23,6 @@ public:
         , is_moving(true)
     {
         center_vec = center2 - center1;
-
-        const Vec3f32 rvec = Vec3f32(radius, radius, radius);
-        const AABB box1(center1 - rvec, center1 + rvec);
-        const AABB box2(center2 - rvec, center2 + rvec);
-        m_bounding_box = AABB(box1, box2);
     }
 
     __device__ bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const {
@@ -64,10 +57,6 @@ public:
         return true;
 	}
 
-    __device__ AABB bounding_box() const {
-        return m_bounding_box;
-    }
-
 private:
     __device__ Vec3f32 sphere_center(float time) const {
         return center + center_vec * time;
@@ -78,5 +67,4 @@ private:
     Material material;
     bool is_moving;
     Vec3f32 center_vec;
-    AABB m_bounding_box;
 };

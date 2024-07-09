@@ -1,7 +1,6 @@
 #pragma once
 
 #include "sphere.h"
-#include "aabb.h"
 
 enum class RenderableType {
 	Sphere
@@ -49,14 +48,6 @@ struct Renderable {
 		switch (data.type) {
 			case RenderableType::Sphere : {
 				return data.payload.sphere.hit(r, ray_t, rec);
-			}
-		}
-	}
-
-	__device__ AABB bounding_box() const {
-		switch (data.type) {
-			case RenderableType::Sphere: {
-				return data.payload.sphere.bounding_box();
 			}
 		}
 	}
