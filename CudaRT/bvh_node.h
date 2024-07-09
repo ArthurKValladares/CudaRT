@@ -3,7 +3,6 @@
 #include "hittable_list.h"
 #include "renderable.h"
 
-#include <vector>
 #include <algorithm>
 
 union BvhNodePayload {
@@ -56,7 +55,7 @@ struct BvhNodeData {
 struct BvhNode {
 	// TODO: This part is actually  kinda hard, try to figure it out better later.
 	// For now, im  assuming all this data in on the CPU, and that I can modify it.
-	__host__ BvhNode(std::vector<Renderable*>& objects, int start, int end) {
+	__host__ BvhNode(Renderable* objects, int start, int end) {
 		// TODO: Make actually random
 		const int axis = 0;
 
@@ -67,14 +66,14 @@ struct BvhNode {
 		size_t object_span = end - start;
 
 		if (object_span == 1) {
-			left = right = BvhNodeData::leaf(objects[start]);
+			left = right = BvhNodeData::leaf(&objects[start]);
 		}
 		else if (object_span == 2) {
-			left = BvhNodeData::leaf(objects[start]);
-			right = BvhNodeData::leaf(objects[start + 1]);
+			left = BvhNodeData::leaf(&objects[start]);
+			right = BvhNodeData::leaf(&objects[start + 1]);
 		}
 		else {
-			std::sort(objects.begin() + start, objects.begin() + end, comparator);
+			std::sort(&objects[0] + start, &objects[0] + end, comparator);
 
 			auto mid = start + object_span / 2;
 
