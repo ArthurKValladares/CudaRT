@@ -253,7 +253,7 @@ int main() {
                             break;
                         }
                         case SDLK_w: {
-                            update_camera << <1, 1 >> > (d_camera, displacement * h_camera->front_movement_vector());
+                            update_camera << <1, 1 >> > (d_camera, -displacement * h_camera->front_movement_vector());
                             break;
                         }
                         case SDLK_a: {
@@ -261,7 +261,7 @@ int main() {
                             break;
                         }
                         case SDLK_s: {
-                            update_camera << <1, 1 >> > (d_camera, -displacement * h_camera->front_movement_vector());
+                            update_camera << <1, 1 >> > (d_camera, displacement * h_camera->front_movement_vector());
                             break;
                         }
                         case SDLK_d: {
