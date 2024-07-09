@@ -13,6 +13,8 @@ public:
 	Vec3f32 p;
 	Vec3f32 normal;
 	float t;
+	float u;
+	float v;
 	bool front_face;
 	const Material* material;
 

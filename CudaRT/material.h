@@ -2,6 +2,7 @@
 
 #include "ray.h"
 #include "hittable.h"
+#include "texture.h"
 
 enum class MaterialType {
 	Lambertian,
@@ -10,7 +11,7 @@ enum class MaterialType {
 };
 
 struct LambertianData {
-    Vec3f32 albedo;
+    Texture texture;
 };
 
 struct MetalData{
@@ -39,9 +40,9 @@ struct Material {
 
     __device__ Material(MaterialData data) : data(data) {}
 
-    __device__ __host__ static Material lambertian(Vec3f32 albedo) {
+    __device__ __host__ static Material lambertian(Texture texture) {
         MaterialPayload payload = {};
-        payload.lambertian.albedo = albedo;
+        payload.lambertian.texture = texture;
         return Material {
             MaterialData {
                 MaterialType::Lambertian,
@@ -85,7 +86,7 @@ struct Material {
                 scatter_direction = rec.normal;
 
             scattered = Ray(rec.p, scatter_direction, r_in.time());
-            attenuation = data.payload.lambertian.albedo;
+            attenuation = data.payload.lambertian.texture.value(rec.u, rec.v, rec.p);
             return true;
         }
         case MaterialType::Metal: {

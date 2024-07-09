@@ -12,6 +12,7 @@
 #include "hittable_list.h"
 #include "camera.h"
 #include "material.h"
+#include "texture.h"
 
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
@@ -110,7 +111,9 @@ __global__ void create_world(curandState* rand_state, Renderable* renderables, H
     if (threadIdx.x == 0 && blockIdx.x == 0) {
         int i = 0;
 
-        renderables[i++] = Renderable::Sphere(Vec3f32(0, -1000.0, -1), 1000, Material::lambertian(Vec3f32(0.5, 0.5, 0.)));
+        renderables[i++] = Renderable::Sphere(Vec3f32(0, -1000.0, -1), 1000, Material::lambertian(
+            Texture::CheckerPattern(0.32, Vec3f32(0.2, 0.3, 0.1), Vec3f32(0.9, 0.9, 0.9))
+        ));
         for (int a = -SPHERES_GRID_SIZE; a < SPHERES_GRID_SIZE; a++) {
             for (int b = -SPHERES_GRID_SIZE; b < SPHERES_GRID_SIZE; b++) {
                 const float choose_material = random_float(rand_state);
@@ -123,7 +126,7 @@ __global__ void create_world(curandState* rand_state, Renderable* renderables, H
 
                     const Vec3f32 center2 = center + Vec3f32(0.0, random_float(rand_state, 0.0, 0.5), 0.0);
                     renderables[i++] = Renderable::Sphere(center, center2, 0.2,
-                        Material::lambertian(Vec3f32(r, g, b)));
+                        Material::lambertian(Texture::SolidColor(Vec3f32(r, g, b))));
                 }
                 else if (choose_material < 0.95f) {
                     const float r = 0.5f * (1.0f + random_float(rand_state));
@@ -140,7 +143,7 @@ __global__ void create_world(curandState* rand_state, Renderable* renderables, H
             }
         }
         renderables[i++] = Renderable::Sphere(Vec3f32(0, 1, 0), 1, Material::dieletric(1.5));
-        renderables[i++] = Renderable::Sphere(Vec3f32(-4, 1, 0), 1, Material::lambertian(Vec3f32(0.4, 0.2, 0.1)));
+        renderables[i++] = Renderable::Sphere(Vec3f32(-4, 1, 0), 1, Material::lambertian(Texture::SolidColor(Vec3f32(0.4, 0.2, 0.1))));
         renderables[i++] = Renderable::Sphere(Vec3f32(4, 1, 0), 1, Material::metal(Vec3f32(0.7, 0.6, 0.5), 0.0));
 
         assert(SPHERE_COUNT == i);
