@@ -13,6 +13,7 @@
 #include "camera.h"
 #include "material.h"
 #include "texture.h"
+#include "rtw_image.h"
 
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
@@ -213,6 +214,8 @@ int main() {
         return 0;
     }
     SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
+
+    const RtwImage image = RtwImage("earthmap.jpg");
 
     Uint32* d_surface_buffer;
     checkCudaErrors(cudaMalloc(&d_surface_buffer, surface_buffer_size));

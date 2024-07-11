@@ -13,6 +13,12 @@ __host__ __device__ T lerp(T a, T b, float t) {
 	return (1.0 - t) * a + t * b;
 }
 
+int clamp(int x, int low, int high) {
+	if (x < low) return low;
+	if (x < high) return x;
+	return high - 1;
+}
+
 __host__ __device__ inline double degrees_to_radians(double degrees) {
 	return degrees * M_PI / 180.0;
 }
