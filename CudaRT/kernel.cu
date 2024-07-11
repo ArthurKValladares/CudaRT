@@ -79,14 +79,14 @@ __device__ Uint32 vec3_to_color(Vec3f32 color) {
     return (0xFF << 24) | (R << 16) | (G << 8) | (B);
 }
 
-__global__ void render_init(int max_x, int max_y, curandState* rand_state) {
+__global__ void random_state_init(int max_x, int max_y, curandState* rand_state) {
     const int i = threadIdx.x + blockIdx.x * blockDim.x;
     const int j = threadIdx.y + blockIdx.y * blockDim.y;
     if ((i >= max_x) || (j >= max_y)) return;
     int flipped_j = max_y - 1 - j;
     int pixel_index = flipped_j * max_x + i;
     const unsigned long long seed = 1984;
-    curand_init(seed + pixel_index, 0, 0, &rand_state[pixel_index]);
+    curand_init(seed, pixel_index, 0, &rand_state[pixel_index]);
 }
 
 __global__ void render(HittableList* hittables, curandState* rand_state, int ns, Uint32* fb, int max_x, int max_y, Camera* cam) {
@@ -101,7 +101,7 @@ __global__ void render(HittableList* hittables, curandState* rand_state, int ns,
     for (int s = 0; s < ns; s++) {
         float u = float(i + random_float(&local_rand_state)) / float(max_x);
         float v = float(j + random_float(&local_rand_state)) / float(max_y);
-        Ray r = cam->get_ray(u, v, rand_state);
+        Ray r = cam->get_ray(u, v, &local_rand_state);
         col += color(&local_rand_state, hittables, r);
     }
 
@@ -223,7 +223,7 @@ int main() {
     curandState* d_rand_state;
     checkCudaErrors(cudaMalloc((void**)&d_rand_state, num_pixels * sizeof(curandState)));
 
-    render_init << <blocks, threads >> > (nx, ny, d_rand_state);
+    random_state_init << <blocks, threads >> > (nx, ny, d_rand_state);
     checkCudaErrors(cudaGetLastError());
     checkCudaErrors(cudaDeviceSynchronize());
 
