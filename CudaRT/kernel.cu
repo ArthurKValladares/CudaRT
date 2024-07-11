@@ -28,7 +28,7 @@
 #define CAMERA_DEFAULT_METERS_PER_SECOND 15.0
 #define CAMERA_SPEED_DELTA 0.5
 
-__device__ Vec3f32 color(curandState* local_rand_state, HittableList* hittables, const Ray& r) {
+__device__ Vec3f32 color(LocalRandomState& local_rand_state, HittableList* hittables, const Ray& r) {
     Ray cur_ray = r;
     Vec3f32 cur_attenuation = Vec3f32(1.0, 1.0, 1.0);
     for (int i = 0; i < MAX_BOUNCE_DEPTH; i++) {
@@ -95,14 +95,14 @@ __global__ void render(HittableList* hittables, curandState* rand_state, int ns,
     if ((i >= max_x) || (j >= max_y)) return;
     int flipped_j = max_y - 1 - j;
     int pixel_index = flipped_j * max_x + i;
-    curandState local_rand_state = rand_state[pixel_index];
+    LocalRandomState local_rand_state = LocalRandomState{ rand_state[pixel_index] };
 
     Vec3f32 col(0., 0., 0.);
     for (int s = 0; s < ns; s++) {
-        float u = float(i + random_float(&local_rand_state)) / float(max_x);
-        float v = float(j + random_float(&local_rand_state)) / float(max_y);
-        Ray r = cam->get_ray(u, v, &local_rand_state);
-        col += color(&local_rand_state, hittables, r);
+        float u = float(i + random_float(local_rand_state)) / float(max_x);
+        float v = float(j + random_float(local_rand_state)) / float(max_y);
+        Ray r = cam->get_ray(u, v, local_rand_state);
+        col += color(local_rand_state, hittables, r);
     }
 
     fb[pixel_index] = vec3_to_color(col / float(ns));
@@ -110,30 +110,33 @@ __global__ void render(HittableList* hittables, curandState* rand_state, int ns,
 
 __global__ void create_world(curandState* rand_state, Renderable* renderables, HittableList* hittables, Camera* d_camera, int nx, int ny) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
+        LocalRandomState local_rand_state = LocalRandomState{ rand_state[0] };
+
         int i = 0;
 
         renderables[i++] = Renderable::Sphere(Vec3f32(0, -1000.0, -1), 1000, Material::lambertian(
             Texture::CheckerPattern(0.32, Vec3f32(0.2, 0.3, 0.1), Vec3f32(0.9, 0.9, 0.9))
         ));
+
         for (int a = -SPHERES_GRID_SIZE; a < SPHERES_GRID_SIZE; a++) {
             for (int b = -SPHERES_GRID_SIZE; b < SPHERES_GRID_SIZE; b++) {
-                const float choose_material = random_float(rand_state);
-                const Vec3f32 center = Vec3f32(a + random_float(rand_state), 0.2, b + random_float(rand_state));
+                const float choose_material = random_float(local_rand_state);
+                const Vec3f32 center = Vec3f32(a + random_float(local_rand_state), 0.2, b + random_float(local_rand_state));
 
                 if (choose_material < 0.8f) {
-                    const float r = random_float(rand_state) * random_float(rand_state);
-                    const float g = random_float(rand_state) * random_float(rand_state);
-                    const float b = random_float(rand_state) * random_float(rand_state);
+                    const float r = random_float(local_rand_state) * random_float(local_rand_state);
+                    const float g = random_float(local_rand_state) * random_float(local_rand_state);
+                    const float b = random_float(local_rand_state) * random_float(local_rand_state);
 
-                    const Vec3f32 center2 = center + Vec3f32(0.0, random_float(rand_state, 0.0, 0.5), 0.0);
+                    const Vec3f32 center2 = center + Vec3f32(0.0, random_float(local_rand_state, 0.0, 0.5), 0.0);
                     renderables[i++] = Renderable::Sphere(center, center2, 0.2,
                         Material::lambertian(Texture::SolidColor(Vec3f32(r, g, b))));
                 }
                 else if (choose_material < 0.95f) {
-                    const float r = 0.5f * (1.0f + random_float(rand_state));
-                    const float g = 0.5f * (1.0f + random_float(rand_state));
-                    const float b = 0.5f * (1.0f + random_float(rand_state));
-                    const float fuzz = 0.5f * random_float(rand_state);
+                    const float r = 0.5f * (1.0f + random_float(local_rand_state));
+                    const float g = 0.5f * (1.0f + random_float(local_rand_state));
+                    const float b = 0.5f * (1.0f + random_float(local_rand_state));
+                    const float fuzz = 0.5f * random_float(local_rand_state);
                     
                     renderables[i++] = Renderable::Sphere(center, 0.2,
                         Material::metal(Vec3f32(r, g, b), fuzz));

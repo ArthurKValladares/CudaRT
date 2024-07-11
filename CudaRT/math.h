@@ -23,11 +23,15 @@ __host__ __device__ inline double degrees_to_radians(double degrees) {
 	return degrees * M_PI / 180.0;
 }
 
-__device__ float random_float(curandState* rand_state) {
-	return curand_uniform(rand_state);
+struct LocalRandomState {
+	curandState rand_state;
+};
+
+__device__ float random_float(LocalRandomState& local_rand_state) {
+	return curand_uniform(&local_rand_state.rand_state);
 }
 
-__device__ float random_float(curandState* rand_state, float min, float max) {
-	const float t = curand_uniform(rand_state);
+__device__ float random_float(LocalRandomState& local_rand_state, float min, float max) {
+	const float t = curand_uniform(&local_rand_state.rand_state);
 	return lerp(min, max, t);
 }

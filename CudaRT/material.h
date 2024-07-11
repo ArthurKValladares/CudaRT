@@ -75,11 +75,11 @@ struct Material {
     }
 
     __device__ bool scatter(
-        const Ray& r_in, const HitRecord& rec, Vec3f32& attenuation, Ray& scattered, curandState* rand_state
+        const Ray& r_in, const HitRecord& rec, Vec3f32& attenuation, Ray& scattered, LocalRandomState& local_rand_state
     ) const {
         switch (data.type) {
         case MaterialType::Lambertian: {
-            auto scatter_direction = rec.normal + random_unit_vector(rand_state);
+            auto scatter_direction = rec.normal + random_unit_vector(local_rand_state);
 
             // Catch degenerate scatter direction
             if (scatter_direction.near_zero())
@@ -91,7 +91,7 @@ struct Material {
         }
         case MaterialType::Metal: {
             Vec3f32 reflected = reflect(r_in.direction(), rec.normal);
-            reflected = unit_vector(reflected) + (data.payload.metal.fuzz * random_unit_vector(rand_state));
+            reflected = unit_vector(reflected) + (data.payload.metal.fuzz * random_unit_vector(local_rand_state));
             scattered = Ray(rec.p, reflected, r_in.time());
             attenuation = data.payload.metal.albedo;
             return (dot(scattered.direction(), rec.normal) > 0);
@@ -107,7 +107,7 @@ struct Material {
             bool cannot_refract = ri * sin_theta > 1.0;
             Vec3f32 direction;
 
-            if (cannot_refract || reflectance(cos_theta, ri) > random_float(rand_state)) {
+            if (cannot_refract || reflectance(cos_theta, ri) > random_float(local_rand_state)) {
                 direction = reflect(unit_direction, rec.normal);
             }
             else {

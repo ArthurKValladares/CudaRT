@@ -31,10 +31,10 @@ public:
         origin += disp;
     }
 
-    __device__ Ray get_ray(float s, float t, curandState* rand_state) {
-        const Vec3f32 rd = lens_radius * random_in_unit_disk(rand_state);
+    __device__ Ray get_ray(float s, float t, LocalRandomState& local_rand_state) {
+        const Vec3f32 rd = lens_radius * random_in_unit_disk(local_rand_state);
         const Vec3f32 offset = right * rd.x() + up * rd.y();
-        const float ray_time = random_float(rand_state);
+        const float ray_time = random_float(local_rand_state);
         return Ray(origin + offset, lower_left_corner + s * horizontal + t * vertical - origin - offset, ray_time);
     }
 

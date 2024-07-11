@@ -175,28 +175,28 @@ __host__ __device__ inline Vec3f32 unit_vector(Vec3f32 v) {
 }
 
 // TODO: Make these host as well, need a host random_float function
-__device__ Vec3f32 random_vec(curandState* rand_state) {
-    return Vec3f32(random_float(rand_state), random_float(rand_state), random_float(rand_state));
+__device__ Vec3f32 random_vec(LocalRandomState& local_rand_state) {
+    return Vec3f32(random_float(local_rand_state), random_float(local_rand_state), random_float(local_rand_state));
 }
 
-__device__ Vec3f32 random_vec(curandState* rand_state, double min, double max) {
-    return Vec3f32(random_float(rand_state, min, max), random_float(rand_state, min, max), random_float(rand_state, min, max));
+__device__ Vec3f32 random_vec(LocalRandomState& local_rand_state, double min, double max) {
+    return Vec3f32(random_float(local_rand_state, min, max), random_float(local_rand_state, min, max), random_float(local_rand_state, min, max));
 }
 
-__device__ Vec3f32 random_in_unit_sphere(curandState* rand_state) {
+__device__ Vec3f32 random_in_unit_sphere(LocalRandomState& local_rand_state) {
     Vec3f32 p;
     do {
-        p = 2.0f * random_vec(rand_state) - Vec3f32(1, 1, 1);
+        p = 2.0f * random_vec(local_rand_state) - Vec3f32(1, 1, 1);
     } while (p.squared_length() >= 1.0f);
     return p;
 }
 
-__device__ Vec3f32 random_unit_vector(curandState* rand_state) {
-    return unit_vector(random_in_unit_sphere(rand_state));
+__device__ Vec3f32 random_unit_vector(LocalRandomState& local_rand_state) {
+    return unit_vector(random_in_unit_sphere(local_rand_state));
 }
 
-__device__ Vec3f32 random_on_hemisphere(curandState* rand_state, const Vec3f32& normal) {
-    Vec3f32 on_unit_sphere = random_unit_vector(rand_state);
+__device__ Vec3f32 random_on_hemisphere(LocalRandomState& local_rand_state, const Vec3f32& normal) {
+    Vec3f32 on_unit_sphere = random_unit_vector(local_rand_state);
     // In the same hemisphere as the normal
     if (dot(on_unit_sphere, normal) > 0.0) {
         return on_unit_sphere;
@@ -206,10 +206,10 @@ __device__ Vec3f32 random_on_hemisphere(curandState* rand_state, const Vec3f32& 
     }
 }
 
-__device__ Vec3f32 random_in_unit_disk(curandState* rand_state) {
+__device__ Vec3f32 random_in_unit_disk(LocalRandomState& local_rand_state) {
     Vec3f32 p;
     while (true) {
-        p = Vec3f32(random_float(rand_state , -1, 1), random_float(rand_state , -1, 1), 0);
+        p = Vec3f32(random_float(local_rand_state, -1, 1), random_float(local_rand_state, -1, 1), 0);
         if (p.squared_length() < 1) {
             return p;
         }
