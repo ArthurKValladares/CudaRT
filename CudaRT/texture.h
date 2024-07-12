@@ -30,8 +30,9 @@ union TexturePayload {
 	CheckerPatternPayload checker_payload;
 	ImagePayload image;
 
-	TexturePayload& operator=(const TexturePayload& payload) {
-		// TODO: memcpy
+	__device__ TexturePayload& operator=(const TexturePayload& payload) {
+		memcpy(this, &payload, sizeof(TexturePayload));
+
 		return *this;
 	}
 };
@@ -66,7 +67,7 @@ struct TextureData {
 		};
 	}
 
-	TextureData& operator=(const TextureData& texture_data) {
+	__device__ TextureData& operator=(const TextureData& texture_data) {
 		type = texture_data.type;
 		payload = texture_data.payload;
 

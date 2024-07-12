@@ -8,14 +8,22 @@ enum class RenderableType {
 
 union RenderablePayload {
 	Sphere sphere;
+
+	__device__ RenderablePayload& operator=(const RenderablePayload& payload) {
+		memcpy(this, &payload, sizeof(RenderablePayload));
+
+		return *this;
+	}
 };
 
 struct RenderableData {
 	RenderableType type;
 	RenderablePayload payload;
 
-	__device__ RenderableData& operator=(const RenderableData& payload) {
-		// TODO: memcpy
+	__device__ RenderableData& operator=(const RenderableData& data) {
+		type = data.type;
+		payload = data.payload;
+
 		return *this;
 	}
 };
