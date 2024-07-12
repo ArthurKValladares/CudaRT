@@ -29,6 +29,11 @@ union TexturePayload {
 	SolidColorPayload solid_color;
 	CheckerPatternPayload checker_payload;
 	ImagePayload image;
+
+	TexturePayload& operator=(const TexturePayload& payload) {
+		// TODO: memcpy
+		return *this;
+	}
 };
 
 struct TextureData {
@@ -62,6 +67,9 @@ struct TextureData {
 	}
 
 	TextureData& operator=(const TextureData& texture_data) {
+		type = texture_data.type;
+		payload = texture_data.payload;
+
 		return *this;
 	}
 

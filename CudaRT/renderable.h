@@ -13,6 +13,11 @@ union RenderablePayload {
 struct RenderableData {
 	RenderableType type;
 	RenderablePayload payload;
+
+	__device__ RenderableData& operator=(const RenderableData& payload) {
+		// TODO: memcpy
+		return *this;
+	}
 };
 
 struct Renderable {
@@ -50,6 +55,12 @@ struct Renderable {
 				return data.payload.sphere.hit(r, ray_t, rec);
 			}
 		}
+	}
+
+	__device__ Renderable& operator=(const Renderable& renderable) {
+		data = renderable.data;
+
+		return *this;
 	}
 
 private:

@@ -13,7 +13,7 @@ __host__ __device__ T lerp(T a, T b, float t) {
 	return (1.0 - t) * a + t * b;
 }
 
-int clamp(int x, int low, int high) {
+__host__ __device__ int clamp(int x, int low, int high) {
 	if (x < low) return low;
 	if (x < high) return x;
 	return high - 1;
