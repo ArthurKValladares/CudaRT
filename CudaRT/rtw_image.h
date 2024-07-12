@@ -28,37 +28,50 @@ public:
         std::cerr << "ERROR: Could not load image file '" << image_filename << "'.\n";
     }
 
-    ~RtwImage() {
+    RtwImage& operator=(const RtwImage& image) {
+        bdata = image.bdata;
+        image_width = image.image_width;
+        image_height = image.image_height;
+        bytes_per_scanline = image.bytes_per_scanline;
+
+        return *this;
+    }
+
+    void free_image() {
         delete[] bdata;
-        STBI_FREE(fdata);
     }
 
     bool load(const std::string& filename) {
         auto n = bytes_per_pixel;
-        fdata = stbi_loadf(filename.c_str(), &image_width, &image_height, &n, bytes_per_pixel);
-        if (fdata == nullptr) return false;
+        float* fdata = stbi_loadf(filename.c_str(), &image_width, &image_height, &n, bytes_per_pixel);
+        if (fdata == nullptr) {
+            return false;
+        }
 
         bytes_per_scanline = image_width * bytes_per_pixel;
-        convert_to_bytes();
+        int total_bytes = image_width * image_height * bytes_per_pixel;
+        bdata = new unsigned char[total_bytes];
+
+        auto* bptr = bdata;
+        auto* fptr = fdata;
+        for (auto i = 0; i < total_bytes; i++, fptr++, bptr++) {
+            *bptr = float_to_byte(*fptr);
+        }
+
+        STBI_FREE(fdata);
+
         return true;
     }
 
-    int width()  const { 
-        return (fdata == nullptr) ?
-            0 :
-            image_width; 
+    __device__ int width()  const { 
+        return image_width; 
     }
 
-    int height() const { 
-        return (fdata == nullptr) ?
-            0 :
-            image_height;
+    __device__ int height() const {
+        return image_height;
     }
 
-    const unsigned char* pixel_data(int x, int y) const {
-        static unsigned char magenta[] = { 255, 0, 255 };
-        if (bdata == nullptr) return magenta;
-
+    __device__ const unsigned char* pixel_data(int x, int y) const {
         x = clamp(x, 0, image_width);
         y = clamp(y, 0, image_height);
 
@@ -67,7 +80,6 @@ public:
 
 private:
     const int      bytes_per_pixel = 3;
-    float*         fdata = nullptr;
     unsigned char* bdata = nullptr;
     int            image_width = 0;
     int            image_height = 0;
@@ -82,16 +94,5 @@ private:
             return 255;
         }
         return static_cast<unsigned char>(256.0 * value);
-    }
-
-    void convert_to_bytes() {
-        int total_bytes = image_width * image_height * bytes_per_pixel;
-        bdata = new unsigned char[total_bytes];
-
-        auto* bptr = bdata;
-        auto* fptr = fdata;
-        for (auto i = 0; i < total_bytes; i++, fptr++, bptr++) {
-            *bptr = float_to_byte(*fptr);
-        }
     }
 };

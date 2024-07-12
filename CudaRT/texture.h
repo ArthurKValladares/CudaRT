@@ -1,10 +1,13 @@
 #pragma once
 
 #include "vec3.h"
+#include "rtw_image.h"
+#include "interval.h"
 
 enum class TextureType {
 	SolidColor,
-	CheckerPattern
+	CheckerPattern,
+	Image
 };
 
 struct SolidColorPayload {
@@ -18,15 +21,17 @@ struct CheckerPatternPayload {
 	Vec3f32 odd;
 };
 
+struct ImagePayload {
+	RtwImage image;
+};
+
 union TexturePayload {
 	SolidColorPayload solid_color;
 	CheckerPatternPayload checker_payload;
+	ImagePayload image;
 };
 
 struct TextureData {
-	TextureType type;
-	TexturePayload payload;
-
 	__device__ static TextureData SolidColor(const Vec3f32& albedo) {
 		TexturePayload payload = {};
 		payload.solid_color.albedo = albedo;
@@ -46,6 +51,22 @@ struct TextureData {
 			payload
 		};
 	}
+
+	__device__ static TextureData Image(RtwImage image) {
+		TexturePayload payload = {};
+		payload.image.image = image;
+		return TextureData{
+			TextureType::Image,
+			payload
+		};
+	}
+
+	TextureData& operator=(const TextureData& texture_data) {
+		return *this;
+	}
+
+	TextureType type;
+	TexturePayload payload;
 };
 
 struct Texture {
@@ -70,6 +91,13 @@ struct Texture {
 		};
 	}
 
+	__device__ static Texture Image(RtwImage image)
+	{
+		return Texture{
+			TextureData::Image(image)
+		};
+	}
+
 	__device__ Vec3f32 value(double u, double v, const Vec3f32& p) const {
 		switch (data.type) {
 			case TextureType::SolidColor: {
@@ -85,6 +113,23 @@ struct Texture {
 				const bool isEven = (x_integer + y_integer + z_integer) % 2 == 0;
 
 				return isEven ? data.payload.checker_payload.even : data.payload.checker_payload.odd;
+			}
+			case TextureType::Image: {
+				const RtwImage& image = data.payload.image.image;
+
+				if (image.height() <= 0) {
+					return Vec3f32(0.0, 1.0, 1.0);
+				}
+
+				u = Interval(0.0, 1.0).clamp(u);
+				v = 1.0 - Interval(0.0, 1.0).clamp(v);
+
+				auto i = int(u * image.width());
+				auto j = int(v * image.height());
+				auto pixel = image.pixel_data(i, j);
+
+				auto color_scale = 1.0 / 255.0;
+				return Vec3f32(color_scale * pixel[0], color_scale * pixel[1], color_scale * pixel[2]);
 			}
 		}
 	}
