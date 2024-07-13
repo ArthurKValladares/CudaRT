@@ -63,6 +63,9 @@
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <Include>$(ProjectDir)vendor\SDL\include;%(Include)</Include>
     </CudaCompile>
+    <PostBuildEvent>
+      <Command>xcopy /y $(ProjectDir)vendor\SDL\lib\$(Platform) $(OutDir)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
