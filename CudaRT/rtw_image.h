@@ -78,12 +78,13 @@ public:
         return bdata + y * bytes_per_scanline + x * bytes_per_pixel;
     }
 
-private:
-    const int      bytes_per_pixel = 3;
-    unsigned char* bdata = nullptr;
     int            image_width = 0;
     int            image_height = 0;
     int            bytes_per_scanline = 0;
+    unsigned char* bdata = nullptr;
+
+private:
+    const int      bytes_per_pixel = 3;
 
     // TODO: Color class
     static unsigned char float_to_byte(float value) {

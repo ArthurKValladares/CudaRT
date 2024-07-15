@@ -22,7 +22,7 @@ struct CheckerPatternPayload {
 };
 
 struct ImagePayload {
-	RtwImage image;
+	RtwImage* image;
 };
 
 union TexturePayload {
@@ -58,7 +58,7 @@ struct TextureData {
 		};
 	}
 
-	__device__ static TextureData Image(RtwImage image) {
+	__device__ static TextureData Image(RtwImage* image) {
 		TexturePayload payload = {};
 		payload.image.image = image;
 		return TextureData{
@@ -100,7 +100,7 @@ struct Texture {
 		};
 	}
 
-	__device__ static Texture Image(RtwImage image)
+	__device__ static Texture Image(RtwImage* image)
 	{
 		return Texture{
 			TextureData::Image(image)
@@ -124,7 +124,7 @@ struct Texture {
 				return isEven ? data.payload.checker_payload.even : data.payload.checker_payload.odd;
 			}
 			case TextureType::Image: {
-				const RtwImage& image = data.payload.image.image;
+				const RtwImage& image = *data.payload.image.image;
 
 				if (image.height() <= 0) {
 					return Vec3f32(0.0, 1.0, 1.0);

@@ -173,6 +173,15 @@ __global__ void update_camera(Camera* d_camera, Vec3f32 displacement) {
     d_camera->update_position(displacement);
 }
 
+__global__ void initialize_image(RtwImage* d_image, int image_width, int image_height, int bytes_per_scanline) {
+    const int total_bytes = image_height * bytes_per_scanline;
+
+    d_image->image_width = image_width;
+    d_image->image_height = image_height;
+    d_image->bytes_per_scanline = bytes_per_scanline;
+    d_image->bdata = (unsigned char*) malloc(total_bytes * sizeof(unsigned char));
+}
+
 int main() {
     clock_t start, stop;
 
@@ -218,7 +227,11 @@ int main() {
     }
     SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
 
-    const RtwImage image = RtwImage("earthmap.jpg");
+    const RtwImage h_image = RtwImage("earthmap.jpg");
+    RtwImage* d_image;
+    checkCudaErrors(cudaMalloc((void**)&d_image, sizeof(RtwImage)));
+    initialize_image<<<1, 1 >>>(d_image, h_image.image_width, h_image.image_height, h_image.bytes_per_scanline);
+    //checkCudaErrors(cudaMemcpy(h_image.bdata, d_image->bdata, h_image.image_height * h_image.bytes_per_scanline * sizeof(unsigned char), cudaMemcpyDeviceToHost));
 
     Uint32* d_surface_buffer;
     checkCudaErrors(cudaMalloc(&d_surface_buffer, surface_buffer_size));
@@ -239,7 +252,7 @@ int main() {
     checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(Camera)));
     Camera* h_camera = (Camera*) malloc(sizeof(Camera));
 
-    create_world << <1, 1 >> > (d_rand_state, d_renderables, d_hittables, d_camera, nx, ny);
+    create_world<<<1, 1>>>(d_rand_state, d_renderables, d_hittables, d_camera, nx, ny);
 
     printf("Starting Rendering!\n");
     float camera_meters_per_second = CAMERA_DEFAULT_METERS_PER_SECOND;
