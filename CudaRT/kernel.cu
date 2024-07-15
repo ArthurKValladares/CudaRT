@@ -108,7 +108,7 @@ __global__ void render(HittableList* hittables, curandState* rand_state, int ns,
     fb[pixel_index] = vec3_to_color(col / float(ns));
 }
 
-__global__ void create_world(curandState* rand_state, Renderable* renderables, HittableList* hittables, Camera* d_camera, int nx, int ny) {
+__global__ void create_world_random_spheres(curandState* rand_state, Renderable* renderables, HittableList* hittables, Camera* d_camera, int nx, int ny) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
         LocalRandomState local_rand_state = LocalRandomState{ rand_state[0] };
 
@@ -162,6 +162,33 @@ __global__ void create_world(curandState* rand_state, Renderable* renderables, H
             look_at,
             Vec3f32(0, 1, 0),
             30.0,
+            float(nx) / float(ny),
+            aperture,
+            dist_to_focus
+        );
+    }
+}
+
+__global__ void create_world_earth(curandState* rand_state, Renderable* renderables, HittableList* hittables, Camera* d_camera, int nx, int ny, RtwImage* image) {
+    if (threadIdx.x == 0 && blockIdx.x == 0) {
+        LocalRandomState local_rand_state = LocalRandomState{ rand_state[0] };
+
+        int i = 0;
+        renderables[i++] = Renderable::Sphere(Vec3f32(0, 0, 0), 2, Material::lambertian(
+            Texture::Image(image)
+        ));
+
+        *hittables = HittableList(renderables, i);
+
+        Vec3f32 origin(0, 0, 23);
+        Vec3f32 look_at(0, 0, 0);
+        float dist_to_focus = (origin - look_at).length();
+        float aperture = 0.1;
+        *d_camera = Camera(
+            origin,
+            look_at,
+            Vec3f32(0, 1, 0),
+            20.0,
             float(nx) / float(ny),
             aperture,
             dist_to_focus
@@ -259,7 +286,7 @@ int main() {
     checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(Camera)));
     Camera* h_camera = (Camera*) malloc(sizeof(Camera));
 
-    create_world<<<1, 1>>>(d_rand_state, d_renderables, d_hittables, d_camera, nx, ny);
+    create_world_earth<<<1, 1>>>(d_rand_state, d_renderables, d_hittables, d_camera, nx, ny, d_image);
 
     printf("Starting Rendering!\n");
     float camera_meters_per_second = CAMERA_DEFAULT_METERS_PER_SECOND;
