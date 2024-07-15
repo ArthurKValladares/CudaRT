@@ -173,15 +173,6 @@ __global__ void update_camera(Camera* d_camera, Vec3f32 displacement) {
     d_camera->update_position(displacement);
 }
 
-__global__ void initialize_image(RtwImage* d_image, int image_width, int image_height, int bytes_per_scanline) {
-    const int total_bytes = image_height * bytes_per_scanline;
-
-    d_image->image_width = image_width;
-    d_image->image_height = image_height;
-    d_image->bytes_per_scanline = bytes_per_scanline;
-    d_image->bdata = (unsigned char*) malloc(total_bytes * sizeof(unsigned char));
-}
-
 int main() {
     clock_t start, stop;
 
@@ -227,11 +218,27 @@ int main() {
     }
     SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
 
-    const RtwImage h_image = RtwImage("earthmap.jpg");
+    RtwImage h_image = RtwImage("earthmap.jpg");
     RtwImage* d_image;
-    checkCudaErrors(cudaMalloc((void**)&d_image, sizeof(RtwImage)));
-    initialize_image<<<1, 1 >>>(d_image, h_image.image_width, h_image.image_height, h_image.bytes_per_scanline);
-    //checkCudaErrors(cudaMemcpy(h_image.bdata, d_image->bdata, h_image.image_height * h_image.bytes_per_scanline * sizeof(unsigned char), cudaMemcpyDeviceToHost));
+    const int total_bytes = h_image.get_total_bytes();
+
+    {
+        // Allocate device struct
+        checkCudaErrors(cudaMalloc((void**)&d_image, sizeof(RtwImage)));
+
+        // Alocate device image data
+        unsigned char* d_bdata;
+        checkCudaErrors(cudaMalloc((void**)&d_bdata, total_bytes * sizeof(unsigned char)));
+
+        // Copy host image data to device
+        cudaMemcpy(d_bdata, h_image.bdata, sizeof(unsigned char) * total_bytes, cudaMemcpyHostToDevice);
+
+        // Point to device data in host
+        h_image.bdata = d_bdata;
+
+        // Copy host struct to device
+        cudaMemcpy(d_image, &h_image, sizeof(RtwImage), cudaMemcpyHostToDevice);
+    }
 
     Uint32* d_surface_buffer;
     checkCudaErrors(cudaMalloc(&d_surface_buffer, surface_buffer_size));

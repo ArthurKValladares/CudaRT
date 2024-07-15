@@ -41,6 +41,10 @@ public:
         delete[] bdata;
     }
 
+    int get_total_bytes() const {
+        return image_height * bytes_per_scanline;
+    }
+
     bool load(const std::string& filename) {
         auto n = bytes_per_pixel;
         float* fdata = stbi_loadf(filename.c_str(), &image_width, &image_height, &n, bytes_per_pixel);
@@ -49,7 +53,7 @@ public:
         }
 
         bytes_per_scanline = image_width * bytes_per_pixel;
-        int total_bytes = image_width * image_height * bytes_per_pixel;
+        int total_bytes = get_total_bytes();
         bdata = new unsigned char[total_bytes];
 
         auto* bptr = bdata;
