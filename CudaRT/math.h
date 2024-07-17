@@ -35,3 +35,11 @@ __device__ float random_float(LocalRandomState& local_rand_state, float min, flo
 	const float t = curand_uniform(&local_rand_state.rand_state);
 	return lerp(min, max, t);
 }
+
+__device__ int random_int(LocalRandomState& local_rand_state) {
+	return random_float(local_rand_state);
+}
+
+__device__ float random_int(LocalRandomState& local_rand_state, int min, int max) {
+	return random_float(local_rand_state, min, max);
+}
