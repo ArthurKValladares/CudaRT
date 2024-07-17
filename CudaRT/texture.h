@@ -167,7 +167,7 @@ struct Texture {
 			}
 			case TextureType::Perlin: {
 				const PerlinPayload& payload = data.payload.perlin;
-				return Vec3f32(1.0, 1.0, 1.0) * 0.5 * (1.0 + payload.perlin->noise(payload.scale * p));
+				return Vec3f32(0.5, 0.5, 0.5) * (1 + sin(payload.scale * p.z() + 10 * payload.perlin->turb(p, 7)));
 			}
 		}
 	}
