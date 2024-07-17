@@ -180,10 +180,43 @@ __global__ void create_world_earth(curandState* rand_state, Renderable* renderab
 
         *hittables = HittableList(renderables, i);
 
-        Vec3f32 origin(0, 0, 23);
+        Vec3f32 origin(0, 0, 12);
         Vec3f32 look_at(0, 0, 0);
         float dist_to_focus = (origin - look_at).length();
         float aperture = 0.1;
+        *d_camera = Camera(
+            origin,
+            look_at,
+            Vec3f32(0, 1, 0),
+            20.0,
+            float(nx) / float(ny),
+            aperture,
+            dist_to_focus
+        );
+    }
+}
+
+__global__ void create_world_perlin(curandState* rand_state, Renderable* renderables, HittableList* hittables, Camera* d_camera, int nx, int ny, Perlin* perlin) {
+    if (threadIdx.x == 0 && blockIdx.x == 0) {
+        LocalRandomState local_rand_state = LocalRandomState{ rand_state[0] };
+
+        // TODO: This could be done better with more than one single block, in a separate step
+        perlin->init(local_rand_state);
+
+        int i = 0;
+        renderables[i++] = Renderable::Sphere(Vec3f32(0, -1000, 0), 1000, Material::lambertian(
+            Texture::Perlin(perlin)
+        ));
+        renderables[i++] = Renderable::Sphere(Vec3f32(0, 2, 0), 2, Material::lambertian(
+            Texture::Perlin(perlin)
+        ));
+
+        *hittables = HittableList(renderables, i);
+
+        Vec3f32 origin(13, 2, 3);
+        Vec3f32 look_at(0, 0, 0);
+        float dist_to_focus = (origin - look_at).length();
+        float aperture = 0.0;
         *d_camera = Camera(
             origin,
             look_at,
@@ -246,15 +279,14 @@ int main() {
     SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
 
     RtwImage h_image = RtwImage("earthmap.jpg");
+    unsigned char* d_bdata;
     RtwImage* d_image;
     const int total_bytes = h_image.get_total_bytes();
-
     {
         // Allocate device struct
         checkCudaErrors(cudaMalloc((void**)&d_image, sizeof(RtwImage)));
 
         // Alocate device image data
-        unsigned char* d_bdata;
         checkCudaErrors(cudaMalloc((void**)&d_bdata, total_bytes * sizeof(unsigned char)));
 
         // Copy host image data to device
@@ -265,6 +297,32 @@ int main() {
 
         // Copy host struct to device
         cudaMemcpy(d_image, &h_image, sizeof(RtwImage), cudaMemcpyHostToDevice);
+    }
+
+    Perlin h_perlin = {};
+    float* randfloat;
+    int* perm_x;
+    int* perm_y;
+    int* perm_z;
+    Perlin* d_perlin;
+    {
+        // Allocate device struct
+        checkCudaErrors(cudaMalloc((void**)&d_perlin, sizeof(Perlin)));
+
+        // Alocate device Perlin data
+        checkCudaErrors(cudaMalloc((void**)&randfloat, Perlin::point_count * sizeof(float)));
+        checkCudaErrors(cudaMalloc((void**)&perm_x, Perlin::point_count * sizeof(int)));
+        checkCudaErrors(cudaMalloc((void**)&perm_y, Perlin::point_count * sizeof(int)));
+        checkCudaErrors(cudaMalloc((void**)&perm_z, Perlin::point_count * sizeof(int)));
+
+        // Point to device data in host
+        h_perlin.randfloat = randfloat;
+        h_perlin.perm_x = perm_x;
+        h_perlin.perm_y = perm_y;
+        h_perlin.perm_z = perm_z;
+
+        // Copy host struct to device
+        cudaMemcpy(d_perlin, &h_perlin, sizeof(Perlin), cudaMemcpyHostToDevice);
     }
 
     Uint32* d_surface_buffer;
@@ -286,7 +344,8 @@ int main() {
     checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(Camera)));
     Camera* h_camera = (Camera*) malloc(sizeof(Camera));
 
-    create_world_earth<<<1, 1>>>(d_rand_state, d_renderables, d_hittables, d_camera, nx, ny, d_image);
+    //create_world_earth<<<1, 1>>>(d_rand_state, d_renderables, d_hittables, d_camera, nx, ny, d_image);
+    create_world_perlin << <1, 1 >> > (d_rand_state, d_renderables, d_hittables, d_camera, nx, ny, d_perlin);
 
     printf("Starting Rendering!\n");
     float camera_meters_per_second = CAMERA_DEFAULT_METERS_PER_SECOND;
