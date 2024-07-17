@@ -17,9 +17,12 @@ struct Perlin {
     }
 
     __device__ float noise(const Vec3f32& p) const {
-        const float u = p.x() - floor(p.x());
-        const float v = p.y() - floor(p.y());
-        const float w = p.z() - floor(p.z());
+        float u = p.x() - floor(p.x());
+        float v = p.y() - floor(p.y());
+        float w = p.z() - floor(p.z());
+        u = u * u * (3 - 2 * u);
+        v = v * v * (3 - 2 * v);
+        w = w * w * (3 - 2 * w);
 
         const int i = int(floor(p.x()));
         const int j = int(floor(p.y()));

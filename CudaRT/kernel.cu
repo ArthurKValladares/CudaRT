@@ -205,10 +205,10 @@ __global__ void create_world_perlin(curandState* rand_state, Renderable* rendera
 
         int i = 0;
         renderables[i++] = Renderable::Sphere(Vec3f32(0, -1000, 0), 1000, Material::lambertian(
-            Texture::Perlin(perlin)
+            Texture::Perlin(perlin, 4.0)
         ));
         renderables[i++] = Renderable::Sphere(Vec3f32(0, 2, 0), 2, Material::lambertian(
-            Texture::Perlin(perlin)
+            Texture::Perlin(perlin, 4.0)
         ));
 
         *hittables = HittableList(renderables, i);

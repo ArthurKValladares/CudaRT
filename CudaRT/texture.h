@@ -29,6 +29,7 @@ struct ImagePayload {
 
 struct PerlinPayload {
 	Perlin* perlin;
+	float scale;
 };
 
 union TexturePayload {
@@ -74,9 +75,10 @@ struct TextureData {
 		};
 	}
 
-	__device__ static TextureData Perlin(Perlin* perlin) {
+	__device__ static TextureData Perlin(Perlin* perlin, float scale) {
 		TexturePayload payload = {};
 		payload.perlin.perlin = perlin;
+		payload.perlin.scale = scale;
 		return TextureData{
 			TextureType::Perlin,
 			payload
@@ -123,10 +125,10 @@ struct Texture {
 		};
 	}
 
-	__device__ static Texture Perlin(Perlin* perlin)
+	__device__ static Texture Perlin(Perlin* perlin, float scale)
 	{
 		return Texture{
-			TextureData::Perlin(perlin)
+			TextureData::Perlin(perlin, scale)
 		};
 	}
 
@@ -164,7 +166,7 @@ struct Texture {
 				return Vec3f32(color_scale * pixel[0], color_scale * pixel[1], color_scale * pixel[2]);
 			}
 			case TextureType::Perlin: {
-				return Vec3f32(1.0, 1.0, 1.0) * data.payload.perlin.perlin->noise(p);
+				return Vec3f32(1.0, 1.0, 1.0) * data.payload.perlin.perlin->noise(data.payload.perlin.scale * p);
 			}
 		}
 	}
