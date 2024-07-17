@@ -300,7 +300,7 @@ int main() {
     }
 
     Perlin h_perlin = {};
-    float* randfloat;
+    Vec3f32* randvec;
     int* perm_x;
     int* perm_y;
     int* perm_z;
@@ -310,13 +310,13 @@ int main() {
         checkCudaErrors(cudaMalloc((void**)&d_perlin, sizeof(Perlin)));
 
         // Alocate device Perlin data
-        checkCudaErrors(cudaMalloc((void**)&randfloat, Perlin::point_count * sizeof(float)));
+        checkCudaErrors(cudaMalloc((void**)&randvec, Perlin::point_count * sizeof(Vec3f32)));
         checkCudaErrors(cudaMalloc((void**)&perm_x, Perlin::point_count * sizeof(int)));
         checkCudaErrors(cudaMalloc((void**)&perm_y, Perlin::point_count * sizeof(int)));
         checkCudaErrors(cudaMalloc((void**)&perm_z, Perlin::point_count * sizeof(int)));
 
         // Point to device data in host
-        h_perlin.randfloat = randfloat;
+        h_perlin.randvec = randvec;
         h_perlin.perm_x = perm_x;
         h_perlin.perm_y = perm_y;
         h_perlin.perm_z = perm_z;

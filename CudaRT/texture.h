@@ -166,7 +166,8 @@ struct Texture {
 				return Vec3f32(color_scale * pixel[0], color_scale * pixel[1], color_scale * pixel[2]);
 			}
 			case TextureType::Perlin: {
-				return Vec3f32(1.0, 1.0, 1.0) * data.payload.perlin.perlin->noise(data.payload.perlin.scale * p);
+				const PerlinPayload& payload = data.payload.perlin;
+				return Vec3f32(1.0, 1.0, 1.0) * 0.5 * (1.0 + payload.perlin->noise(payload.scale * p));
 			}
 		}
 	}
