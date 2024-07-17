@@ -2,12 +2,14 @@
 
 #include "vec3.h"
 #include "rtw_image.h"
+#include "perlin.h"
 #include "interval.h"
 
 enum class TextureType {
 	SolidColor,
 	CheckerPattern,
-	Image
+	Image,
+	Perlin
 };
 
 struct SolidColorPayload {
@@ -25,10 +27,15 @@ struct ImagePayload {
 	RtwImage* image;
 };
 
+struct PerlinPayload {
+	Perlin* perlin;
+};
+
 union TexturePayload {
 	SolidColorPayload solid_color;
 	CheckerPatternPayload checker_payload;
 	ImagePayload image;
+	PerlinPayload perlin;
 
 	__device__ TexturePayload& operator=(const TexturePayload& payload) {
 		memcpy(this, &payload, sizeof(TexturePayload));
@@ -63,6 +70,15 @@ struct TextureData {
 		payload.image.image = image;
 		return TextureData{
 			TextureType::Image,
+			payload
+		};
+	}
+
+	__device__ static TextureData Perlin(Perlin* perlin) {
+		TexturePayload payload = {};
+		payload.perlin.perlin = perlin;
+		return TextureData{
+			TextureType::Perlin,
 			payload
 		};
 	}
@@ -107,6 +123,13 @@ struct Texture {
 		};
 	}
 
+	__device__ static Texture Perlin(Perlin* perlin)
+	{
+		return Texture{
+			TextureData::Perlin(perlin)
+		};
+	}
+
 	__device__ Vec3f32 value(double u, double v, const Vec3f32& p) const {
 		switch (data.type) {
 			case TextureType::SolidColor: {
@@ -139,6 +162,9 @@ struct Texture {
 
 				auto color_scale = 1.0 / 255.0;
 				return Vec3f32(color_scale * pixel[0], color_scale * pixel[1], color_scale * pixel[2]);
+			}
+			case TextureType::Perlin: {
+				return Vec3f32(1.0, 1.0, 1.0) * data.payload.perlin.perlin->noise(p);
 			}
 		}
 	}

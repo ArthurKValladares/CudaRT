@@ -32,10 +32,10 @@ private:
     int* perm_z;
 
     __device__ void perlin_generate_perm(LocalRandomState& local_rand_state, int* p) {
-        auto p = new int[point_count];
 
-        for (int i = 0; i < point_count; i++)
+        for (int i = 0; i < point_count; i++) {
             p[i] = i;
+        }
 
         permute(local_rand_state, p, point_count);
     }
