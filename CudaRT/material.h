@@ -79,7 +79,7 @@ struct Material {
     ) const {
         switch (data.type) {
         case MaterialType::Lambertian: {
-            auto scatter_direction = rec.normal + random_unit_vector(local_rand_state);
+            Vec3f32 scatter_direction = rec.normal + random_unit_vector(local_rand_state);
 
             // Catch degenerate scatter direction
             if (scatter_direction.near_zero())
@@ -125,7 +125,7 @@ private:
 
     __device__ static float reflectance(float cosine, float refraction_index) {
         // Use Schlick's approximation for reflectance.
-        auto r0 = (1 - refraction_index) / (1 + refraction_index);
+        float r0 = (1 - refraction_index) / (1 + refraction_index);
         r0 = r0 * r0;
         return r0 + (1 - r0) * pow((1 - cosine), 5);
     }

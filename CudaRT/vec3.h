@@ -63,7 +63,7 @@ public:
 
     __host__ __device__ bool near_zero() const {
         // Return true if the vector is close to zero in all dimensions.
-        auto s = 1e-8;
+        const float s = 1e-8;
         return (fabs(e[0]) < s) && (fabs(e[1]) < s) && (fabs(e[2]) < s);
     }
  
@@ -221,7 +221,7 @@ __device__ Vec3f32 reflect(const Vec3f32& v, const Vec3f32& n) {
 }
 
 __device__ Vec3f32 refract(const Vec3f32& uv, const Vec3f32& n, float etai_over_etat) {
-    auto cos_theta = fminf(dot(-uv, n), 1.0);
+    const float cos_theta = fminf(dot(-uv, n), 1.0);
     Vec3f32 r_out_perp = etai_over_etat * (uv + cos_theta * n);
     Vec3f32 r_out_parallel = -sqrt(fabs(1.0 - r_out_perp.squared_length())) * n;
     return r_out_perp + r_out_parallel;

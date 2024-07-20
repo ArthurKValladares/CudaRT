@@ -14,7 +14,7 @@ public:
     RtwImage() {}
 
     RtwImage(const char* image_filename) {
-        auto filename = std::string(image_filename);
+        const std::string filename = std::string(image_filename);
 
         if (load(filename)) return;
         if (load("images/" + filename)) return;
@@ -46,7 +46,7 @@ public:
     }
 
     bool load(const std::string& filename) {
-        auto n = bytes_per_pixel;
+        int n = bytes_per_pixel;
         float* fdata = stbi_loadf(filename.c_str(), &image_width, &image_height, &n, bytes_per_pixel);
         if (fdata == nullptr) {
             return false;
@@ -56,9 +56,9 @@ public:
         int total_bytes = get_total_bytes();
         bdata = new unsigned char[total_bytes];
 
-        auto* bptr = bdata;
-        auto* fptr = fdata;
-        for (auto i = 0; i < total_bytes; i++, fptr++, bptr++) {
+        unsigned char* bptr = bdata;
+        float* fptr = fdata;
+        for (int i = 0; i < total_bytes; i++, fptr++, bptr++) {
             *bptr = float_to_byte(*fptr);
         }
 

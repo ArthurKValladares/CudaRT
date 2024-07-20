@@ -158,11 +158,11 @@ struct Texture {
 				u = Interval(0.0, 1.0).clamp(u);
 				v = 1.0 - Interval(0.0, 1.0).clamp(v);
 
-				auto i = int(u * image.width());
-				auto j = int(v * image.height());
-				auto pixel = image.pixel_data(i, j);
+				const int i = int(u * image.width());
+				const int j = int(v * image.height());
+				const unsigned char* pixel = image.pixel_data(i, j);
 
-				auto color_scale = 1.0 / 255.0;
+				const float color_scale = 1.0 / 255.0;
 				return Vec3f32(color_scale * pixel[0], color_scale * pixel[1], color_scale * pixel[2]);
 			}
 			case TextureType::Perlin: {

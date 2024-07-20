@@ -17,7 +17,7 @@ struct Interval {
 	}
 
 	__device__ Interval expand(float delta) const {
-		auto padding = delta / 2;
+		const float padding = delta / 2;
 		return Interval(min - padding, max + padding);
 	}
 

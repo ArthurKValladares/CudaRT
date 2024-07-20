@@ -43,9 +43,9 @@ struct Perlin {
     }
 
     __device__ float turb(const Vec3f32& p, int depth) const {
-        auto accum = 0.0;
-        auto temp_p = p;
-        auto weight = 1.0;
+        float accum = 0.0;
+        Vec3f32 temp_p = p;
+        float weight = 1.0;
 
         for (int i = 0; i < depth; i++) {
             accum += weight * noise(temp_p);
@@ -86,7 +86,7 @@ private:
         const float uu = u * u * (3 - 2 * u);
         const float vv = v * v * (3 - 2 * v);
         const float ww = w * w * (3 - 2 * w);
-        auto accum = 0.0;
+        float accum = 0.0;
 
         for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 2; j++) {

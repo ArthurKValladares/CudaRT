@@ -29,18 +29,18 @@ public:
         const float ray_tmin = ray_t.min;
         const float ray_tmax = ray_t.max;
         Vec3f32 oc = (is_moving ? sphere_center(r.time()) : center) - r.origin();
-        auto a = r.direction().squared_length();
-        auto h = dot(r.direction(), oc);
-        auto c = oc.squared_length() - radius * radius;
+        const float a = r.direction().squared_length();
+        const float h = dot(r.direction(), oc);
+        const float c = oc.squared_length() - radius * radius;
 
-        auto discriminant = h * h - a * c;
+        const float discriminant = h * h - a * c;
         if (discriminant < 0) {
             return false;
         }
-        auto sqrtd = sqrt(discriminant);
+        const float sqrtd = sqrt(discriminant);
 
         // Find the nearest root that lies in the acceptable range.
-        auto root = (h - sqrtd) / a;
+        float root = (h - sqrtd) / a;
         if (root <= ray_tmin || ray_tmax <= root) {
             root = (h + sqrtd) / a;
             if (root <= ray_tmin || ray_tmax <= root)
@@ -71,8 +71,8 @@ private:
         //     <0 1 0> yields <0.50 1.00>       < 0 -1  0> yields <0.50 0.00>
         //     <0 0 1> yields <0.25 0.50>       < 0  0 -1> yields <0.75 0.50>
 
-        auto theta = acos(-p.y());
-        auto phi = atan2(-p.z(), p.x()) + M_PI;
+        const float theta = acos(-p.y());
+        const float phi = atan2(-p.z(), p.x()) + M_PI;
 
         u = phi / (2 * M_PI);
         v = theta / M_PI;
