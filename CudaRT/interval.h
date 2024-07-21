@@ -21,5 +21,14 @@ struct Interval {
 		return Interval(min - padding, max + padding);
 	}
 
+	__device__ float size() const {
+		return max - min;
+	}
+
 	float min, max;
+
+	static const Interval empty, universe;
 };
+
+const Interval Interval::empty = Interval(+INFINITY, -INFINITY);
+const Interval Interval::universe = Interval(-INFINITY, +INFINITY);
