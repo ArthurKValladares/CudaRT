@@ -14,6 +14,7 @@
 #include "material.h"
 #include "texture.h"
 #include "rtw_image.h"
+#include "quad.h"
 
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
@@ -229,6 +230,35 @@ __global__ void create_world_perlin(curandState* rand_state, Renderable* rendera
     }
 }
 
+__global__ void create_world_quads(curandState* rand_state, Renderable* renderables, HittableList* hittables, Camera* d_camera, int nx, int ny) {
+    if (threadIdx.x == 0 && blockIdx.x == 0) {
+        LocalRandomState local_rand_state = LocalRandomState{ rand_state[0] };
+
+        int i = 0;
+        renderables[i++] = Renderable::Quad(Vec3f32(-3, -2, 5), Vec3f32(0, 0, -4), Vec3f32(0, 4,  0), Material::lambertian(1.0, 0.2, 0.2));
+        renderables[i++] = Renderable::Quad(Vec3f32(-2, -2, 0), Vec3f32(4, 0,  0), Vec3f32(0, 4,  0), Material::lambertian(0.2, 1.0, 0.2));
+        renderables[i++] = Renderable::Quad(Vec3f32( 3, -2, 2), Vec3f32(0, 0,  4), Vec3f32(0, 4,  0), Material::lambertian(0.2, 0.2, 1.0));
+        renderables[i++] = Renderable::Quad(Vec3f32(-2,  3, 1), Vec3f32(4, 0,  0), Vec3f32(0, 0,  4), Material::lambertian(1.0, 0.5, 0.0));
+        renderables[i++] = Renderable::Quad(Vec3f32(-2, -3, 5), Vec3f32(0, 0,  0), Vec3f32(0, 0, -4), Material::lambertian(0.2, 0.8, 0.8));
+
+        *hittables = HittableList(renderables, i);
+
+        Vec3f32 origin(0, 0, 9);
+        Vec3f32 look_at(0, 0, 0);
+        float dist_to_focus = (origin - look_at).length();
+        float aperture = 0.0;
+        *d_camera = Camera(
+            origin,
+            look_at,
+            Vec3f32(0, 1, 0),
+            80.0,
+            float(nx) / float(ny),
+            aperture,
+            dist_to_focus
+        );
+    }
+}
+
 __global__ void update_camera(Camera* d_camera, Vec3f32 displacement) {
     d_camera->update_position(displacement);
 }
@@ -344,8 +374,31 @@ int main() {
     checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(Camera)));
     Camera* h_camera = (Camera*) malloc(sizeof(Camera));
 
-    //create_world_earth<<<1, 1>>>(d_rand_state, d_renderables, d_hittables, d_camera, nx, ny, d_image);
-    create_world_perlin << <1, 1 >> > (d_rand_state, d_renderables, d_hittables, d_camera, nx, ny, d_perlin);
+    const int world_idx = 3;
+    switch (world_idx) {
+    case 0: {
+        create_world_random_spheres << <1, 1 >> > (d_rand_state, d_renderables, d_hittables, d_camera, nx, ny);
+        break;
+    }
+    case 1: {
+        create_world_earth << <1, 1 >> > (d_rand_state, d_renderables, d_hittables, d_camera, nx, ny, d_image);
+        break;
+    }
+    case 2: {
+        create_world_perlin << <1, 1 >> > (d_rand_state, d_renderables, d_hittables, d_camera, nx, ny, d_perlin);
+        break;
+    }
+    case 3: {
+        create_world_quads << <1, 1 >> > (d_rand_state, d_renderables, d_hittables, d_camera, nx, ny);
+        break;
+    }
+    default: {
+        printf("Invalid world id: %d!\n", world_idx);
+        return 0;
+    }
+    }
+    
+    
 
     printf("Starting Rendering!\n");
     float camera_meters_per_second = CAMERA_DEFAULT_METERS_PER_SECOND;

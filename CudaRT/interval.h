@@ -21,6 +21,14 @@ struct Interval {
 		return Interval(min - padding, max + padding);
 	}
 
+	__device__ bool contains(float i) const {
+		return min <= i && i <= max;
+	}
+
+	__device__ bool surrounds(float i) const {
+		return min < i && i < max;
+	}
+
 	__device__ float size() const {
 		return max - min;
 	}

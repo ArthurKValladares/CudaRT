@@ -27,51 +27,94 @@ union MaterialPayload {
     LambertianData lambertian;
     MetalData metal;
     DieletricData dieletric;
+
+    __device__ MaterialPayload& operator=(const MaterialPayload& payload) {
+        memcpy(this, &payload, sizeof(MaterialPayload));
+
+        return *this;
+    }
 };
 
 struct MaterialData {
     MaterialType type;
     MaterialPayload payload;
+
+    __device__ MaterialData() :
+        type(MaterialType::Lambertian),
+        payload(MaterialPayload{ LambertianData{Texture::SolidColor(1.0, 0.0, 1.0)}})
+    {
+    }
+
+    __device__ MaterialData(MaterialType type, MaterialPayload payload) :
+        type(type),
+        payload(payload)
+    {}
+
+    __device__ MaterialData& operator=(const MaterialData& data) {
+        type = data.type;
+        payload = data.payload;
+
+        return *this;
+    }
 };
 
 struct Material {
 
-    Material() = delete;
+    __device__ Material()
+    {
+    }
 
     __device__ Material(MaterialData data) : data(data) {}
 
-    __device__ __host__ static Material lambertian(Texture texture) {
+    __device__ static Material lambertian(Texture texture) {
         MaterialPayload payload = {};
         payload.lambertian.texture = texture;
         return Material {
-            MaterialData {
+            MaterialData (
                 MaterialType::Lambertian,
                 payload
-            }
+            )
         };
     }
 
-    __device__ __host__ static Material metal(Vec3f32 albedo, float fuzz) {
+    __device__ static Material lambertian(float r, float g, float b) {
+        MaterialPayload payload = {};
+        payload.lambertian.texture = Texture::SolidColor(r, g, b);
+        return Material{
+            MaterialData(
+                MaterialType::Lambertian,
+                payload
+            )
+        };
+    }
+
+    __device__ static Material metal(Vec3f32 albedo, float fuzz) {
         MaterialPayload payload = {};
         payload.metal.albedo = albedo;
         payload.metal.fuzz = fuzz;
         return Material{
-            MaterialData {
+            MaterialData(
                 MaterialType::Metal,
                 payload
-            }
+            )
         };
     }
 
-    __device__ __host__ static Material dieletric(float refraction_index) {
+    __device__ static Material dieletric(float refraction_index) {
         MaterialPayload payload = {};
         payload.dieletric.refraction_index = refraction_index;
         return Material{
-            MaterialData {
+            MaterialData (
                 MaterialType::Dieletric,
                 payload
-            }
+            )
         };
+    }
+
+    __device__ Material& operator=(const Material& mat) {
+        data = mat.data;
+
+        return *this;
     }
 
     __device__ bool scatter(

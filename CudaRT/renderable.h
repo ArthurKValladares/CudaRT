@@ -1,13 +1,16 @@
 #pragma once
 
 #include "sphere.h"
+#include "quad.h"
 
 enum class RenderableType {
-	Sphere
+	Sphere,
+	Quad
 };
 
 union RenderablePayload {
 	Sphere sphere;
+	Quad quad;
 
 	__device__ RenderablePayload& operator=(const RenderablePayload& payload) {
 		memcpy(this, &payload, sizeof(RenderablePayload));
@@ -52,6 +55,17 @@ struct Renderable {
 		return Renderable{
 			RenderableData {
 				RenderableType::Sphere,
+				payload
+			}
+		};
+	}
+
+	__device__ static Renderable Quad(const Vec3f32& Q, const Vec3f32& u, const Vec3f32& v, Material mat) {
+		RenderablePayload payload = RenderablePayload{};
+		payload.quad = Quad::Quad(Q, u, v, mat);
+		return Renderable{
+			RenderableData {
+				RenderableType::Quad,
 				payload
 			}
 		};

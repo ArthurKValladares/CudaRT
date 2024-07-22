@@ -79,7 +79,7 @@ struct AABB {
     static const AABB empty, universe;
 
 private: 
-    void pad_to_minimums() {
+    __device__ void pad_to_minimums() {
         double delta = 0.0001;
         if (x.size() < delta) {
             x = x.expand(delta);

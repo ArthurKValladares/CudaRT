@@ -8,6 +8,10 @@
 
 class Sphere {
 public:
+    __device__ __host__ Sphere()
+    {
+    }
+
     __device__ __host__ Sphere(const Vec3f32& center, float radius, Material material)
 		: center(center)
 		, radius(radius)
