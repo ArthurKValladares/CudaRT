@@ -237,9 +237,9 @@ __global__ void create_world_quads(curandState* rand_state, Renderable* renderab
         int i = 0;
         renderables[i++] = Renderable::Quad(Vec3f32(-3, -2, 5), Vec3f32(0, 0, -4), Vec3f32(0, 4,  0), Material::lambertian(1.0, 0.2, 0.2));
         renderables[i++] = Renderable::Quad(Vec3f32(-2, -2, 0), Vec3f32(4, 0,  0), Vec3f32(0, 4,  0), Material::lambertian(0.2, 1.0, 0.2));
-        renderables[i++] = Renderable::Quad(Vec3f32( 3, -2, 2), Vec3f32(0, 0,  4), Vec3f32(0, 4,  0), Material::lambertian(0.2, 0.2, 1.0));
+        renderables[i++] = Renderable::Quad(Vec3f32( 3, -2, 1), Vec3f32(0, 0,  4), Vec3f32(0, 4,  0), Material::lambertian(0.2, 0.2, 1.0));
         renderables[i++] = Renderable::Quad(Vec3f32(-2,  3, 1), Vec3f32(4, 0,  0), Vec3f32(0, 0,  4), Material::lambertian(1.0, 0.5, 0.0));
-        renderables[i++] = Renderable::Quad(Vec3f32(-2, -3, 5), Vec3f32(0, 0,  0), Vec3f32(0, 0, -4), Material::lambertian(0.2, 0.8, 0.8));
+        renderables[i++] = Renderable::Quad(Vec3f32(-2, -3, 5), Vec3f32(4, 0,  0), Vec3f32(0, 0, -4), Material::lambertian(0.2, 0.8, 0.8));
 
         *hittables = HittableList(renderables, i);
 
