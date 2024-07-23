@@ -76,6 +76,9 @@ struct Renderable {
 			case RenderableType::Sphere : {
 				return data.payload.sphere.hit(r, ray_t, rec);
 			}
+			case RenderableType::Quad: {
+				return data.payload.quad.hit(r, ray_t, rec);
+			}
 		}
 	}
 
