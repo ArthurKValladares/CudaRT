@@ -29,7 +29,7 @@
 #define CAMERA_DEFAULT_METERS_PER_SECOND 15.0
 #define CAMERA_SPEED_DELTA 0.5
 
-__device__ Vec3f32 color(LocalRandomState& local_rand_state, HittableList* hittables, const Ray& r) {
+__device__ Vec3f32 color(LocalRandomState& local_rand_state, HittableList* hittables, const Ray& r, Camera* cam) {
     Ray cur_ray = r;
     Vec3f32 cur_attenuation = Vec3f32(1.0, 1.0, 1.0);
     for (int i = 0; i < MAX_BOUNCE_DEPTH; i++) {
@@ -37,6 +37,8 @@ __device__ Vec3f32 color(LocalRandomState& local_rand_state, HittableList* hitta
         if (hittables->hit(cur_ray, 0.001f, FLT_MAX, rec)) {
             Ray scattered;
             Vec3f32 attenuation;
+            Vec3f32 color_from_emission = rec.material->emitted(rec.u, rec.v, rec.p);
+
             if (rec.material->scatter(cur_ray, rec, attenuation, scattered, local_rand_state)) {
                 cur_attenuation *= attenuation;
                 cur_ray = scattered;
@@ -46,12 +48,15 @@ __device__ Vec3f32 color(LocalRandomState& local_rand_state, HittableList* hitta
             }
         }
         else {
+            // TODO: figure out background 
+            
             Vec3f32 unit_direction = unit_vector(cur_ray.direction());
             float t = 0.5f * (unit_direction.y() + 1.0f);
             Vec3f32 c = lerp(Vec3f32(1.0, 1.0, 1.0), Vec3f32(0.5, 0.7, 1.0), t);
             return cur_attenuation * c;
         }
     }
+
     return Vec3f32(0.0, 0.0, 0.0); // exceeded recursion
 }
 
@@ -103,7 +108,7 @@ __global__ void render(HittableList* hittables, curandState* rand_state, int ns,
         float u = float(i + random_float(local_rand_state)) / float(max_x);
         float v = float(j + random_float(local_rand_state)) / float(max_y);
         Ray r = cam->get_ray(u, v, local_rand_state);
-        col += color(local_rand_state, hittables, r);
+        col += color(local_rand_state, hittables, r, cam);
     }
 
     fb[pixel_index] = vec3_to_color(col / float(ns));
@@ -374,7 +379,7 @@ int main() {
     checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(Camera)));
     Camera* h_camera = (Camera*) malloc(sizeof(Camera));
 
-    const int world_idx = 3;
+    const int world_idx = 0;
     switch (world_idx) {
     case 0: {
         create_world_random_spheres << <1, 1 >> > (d_rand_state, d_renderables, d_hittables, d_camera, nx, ny);

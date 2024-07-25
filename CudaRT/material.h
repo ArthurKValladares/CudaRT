@@ -3,11 +3,13 @@
 #include "ray.h"
 #include "hittable.h"
 #include "texture.h"
+#include "light.h"
 
 enum class MaterialType {
 	Lambertian,
     Metal,
     Dieletric,
+    DiffuseLight,
 };
 
 struct LambertianData {
@@ -23,10 +25,15 @@ struct DieletricData {
     float refraction_index;
 };
 
+struct LightData {
+    DiffuseLight light;
+};
+
 union MaterialPayload {
     LambertianData lambertian;
     MetalData metal;
     DieletricData dieletric;
+    DiffuseLight light;
 
     __device__ MaterialPayload& operator=(const MaterialPayload& payload) {
         memcpy(this, &payload, sizeof(MaterialPayload));
@@ -159,6 +166,26 @@ struct Material {
 
             scattered = Ray(rec.p, direction, r_in.time());
             return true;
+        }
+        case MaterialType::DiffuseLight: {
+            return false;
+        }
+        }
+    }
+
+    __device__ Vec3f32 emitted(double u, double v, const Vec3f32& p) const {
+        switch (data.type) {
+        case MaterialType::Lambertian: {
+            return Vec3f32(0.0, 0.0, 0.0);
+        }
+        case MaterialType::Metal: {
+            return Vec3f32(0.0, 0.0, 0.0);
+        }
+        case MaterialType::Dieletric: {
+            return Vec3f32(0.0, 0.0, 0.0);
+        }
+        case MaterialType::DiffuseLight: {
+            return data.payload.light.emitted(u, v, p);
         }
         }
     }
