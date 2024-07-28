@@ -118,6 +118,17 @@ struct Material {
         };
     }
 
+    __device__ static Material diffuse_light(Vec3f32 color) {
+        MaterialPayload payload = {};
+        payload.light = DiffuseLight(color);
+        return Material{
+            MaterialData(
+                MaterialType::DiffuseLight,
+                payload
+            )
+        };
+    }
+
     __device__ Material& operator=(const Material& mat) {
         data = mat.data;
 

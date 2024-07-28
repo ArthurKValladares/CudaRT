@@ -29,35 +29,28 @@
 #define CAMERA_DEFAULT_METERS_PER_SECOND 15.0
 #define CAMERA_SPEED_DELTA 0.5
 
-__device__ Vec3f32 color(LocalRandomState& local_rand_state, HittableList* hittables, const Ray& r, Camera* cam) {
-    Ray cur_ray = r;
-    Vec3f32 cur_attenuation = Vec3f32(1.0, 1.0, 1.0);
-    for (int i = 0; i < MAX_BOUNCE_DEPTH; i++) {
-        HitRecord rec;
-        if (hittables->hit(cur_ray, 0.001f, FLT_MAX, rec)) {
-            Ray scattered;
-            Vec3f32 attenuation;
-            Vec3f32 color_from_emission = rec.material->emitted(rec.u, rec.v, rec.p);
-
-            if (rec.material->scatter(cur_ray, rec, attenuation, scattered, local_rand_state)) {
-                cur_attenuation *= attenuation;
-                cur_ray = scattered;
-            }
-            else {
-                return Vec3f32(0.0, 0.0, 0.0);
-            }
-        }
-        else {
-            // TODO: figure out background 
-            
-            Vec3f32 unit_direction = unit_vector(cur_ray.direction());
-            float t = 0.5f * (unit_direction.y() + 1.0f);
-            Vec3f32 c = lerp(Vec3f32(1.0, 1.0, 1.0), Vec3f32(0.5, 0.7, 1.0), t);
-            return cur_attenuation * c;
-        }
+__device__ Vec3f32 color(LocalRandomState& local_rand_state, HittableList* hittables, const Ray& r, Camera* cam, int depth) {
+    if (depth <= 0) {
+        return Vec3f32(0.0, 0.0, 0.0);
     }
 
-    return Vec3f32(0.0, 0.0, 0.0); // exceeded recursion
+    HitRecord rec;
+
+    if (!hittables->hit(r, 0.001f, FLT_MAX, rec)) {
+        return cam->background;
+    }
+
+    Ray scattered;
+    Vec3f32 attenuation;
+    const Vec3f32 color_from_emission = rec.material->emitted(rec.u, rec.v, rec.p);
+
+    if (rec.material->scatter(r, rec, attenuation, scattered, local_rand_state)) {
+        return color_from_emission;
+    }
+
+    const Vec3f32 color_from_scatter = attenuation * color(local_rand_state, hittables, scattered, cam, depth - 1);
+
+    return color_from_emission + color_from_scatter;
 }
 
 __device__ double linear_to_gamma(double linear_component)
@@ -108,7 +101,7 @@ __global__ void render(HittableList* hittables, curandState* rand_state, int ns,
         float u = float(i + random_float(local_rand_state)) / float(max_x);
         float v = float(j + random_float(local_rand_state)) / float(max_y);
         Ray r = cam->get_ray(u, v, local_rand_state);
-        col += color(local_rand_state, hittables, r, cam);
+        col += color(local_rand_state, hittables, r, cam, MAX_BOUNCE_DEPTH);
     }
 
     fb[pixel_index] = vec3_to_color(col / float(ns));
@@ -264,6 +257,39 @@ __global__ void create_world_quads(curandState* rand_state, Renderable* renderab
     }
 }
 
+__global__ void create_world_simple_light(curandState* rand_state, Renderable* renderables, HittableList* hittables, Camera* d_camera, int nx, int ny, Perlin* perlin) {
+    if (threadIdx.x == 0 && blockIdx.x == 0) {
+        LocalRandomState local_rand_state = LocalRandomState{ rand_state[0] };
+
+        int i = 0;
+        renderables[i++] = Renderable::Sphere(Vec3f32(0, -1000, 0), 1000, Material::lambertian(
+            Texture::Perlin(perlin, 4.0)
+        ));
+        renderables[i++] = Renderable::Sphere(Vec3f32(0, 2, 0), 2, Material::lambertian(
+            Texture::Perlin(perlin, 4.0)
+        ));
+
+        renderables[i++] = Renderable::Quad(Vec3f32(3, 1, -2), Vec3f32(2, 0, 0), Vec3f32(0, 2, 0), 
+            Material::diffuse_light(Vec3f32(4.0, 4.0, 4.0)));
+
+        *hittables = HittableList(renderables, i);
+
+        Vec3f32 origin(26, 3, 6);
+        Vec3f32 look_at(0, 2, 0);
+        float dist_to_focus = (origin - look_at).length();
+        float aperture = 0.0;
+        *d_camera = Camera(
+            origin,
+            look_at,
+            Vec3f32(0, 1, 0),
+            20.0,
+            float(nx) / float(ny),
+            aperture,
+            dist_to_focus
+        );
+    }
+}
+
 __global__ void update_camera(Camera* d_camera, Vec3f32 displacement) {
     d_camera->update_position(displacement);
 }
@@ -379,7 +405,7 @@ int main() {
     checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(Camera)));
     Camera* h_camera = (Camera*) malloc(sizeof(Camera));
 
-    const int world_idx = 0;
+    const int world_idx = 4;
     switch (world_idx) {
     case 0: {
         create_world_random_spheres << <1, 1 >> > (d_rand_state, d_renderables, d_hittables, d_camera, nx, ny);
@@ -395,6 +421,10 @@ int main() {
     }
     case 3: {
         create_world_quads << <1, 1 >> > (d_rand_state, d_renderables, d_hittables, d_camera, nx, ny);
+        break;
+    }
+    case 4: {
+        create_world_simple_light << <1, 1 >> > (d_rand_state, d_renderables, d_hittables, d_camera, nx, ny, d_perlin);
         break;
     }
     default: {
