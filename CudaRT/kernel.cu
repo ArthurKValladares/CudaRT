@@ -30,27 +30,23 @@
 #define CAMERA_SPEED_DELTA 0.5
 
 __device__ Vec3f32 color(LocalRandomState& local_rand_state, HittableList* hittables, const Ray& r, Camera* cam, int depth) {
-    if (depth <= 0) {
-        return Vec3f32(0.0, 0.0, 0.0);
-    }
-
     HitRecord rec;
 
-    if (!hittables->hit(r, 0.001f, FLT_MAX, rec)) {
+    if (hittables->hit(r, 0.001f, FLT_MAX, rec)) {
+        Ray scattered;
+        Vec3f32 attenuation;
+        const Vec3f32 color_from_emission = rec.material->emitted(rec.u, rec.v, rec.p);
+
+        if (depth > 0 && rec.material->scatter(r, rec, attenuation, scattered, local_rand_state)) {
+            return color_from_emission + attenuation * color(local_rand_state, hittables, scattered, cam, depth - 1);
+        }
+        else {
+            return color_from_emission;
+        }
+    }
+    else {
         return cam->background;
     }
-
-    Ray scattered;
-    Vec3f32 attenuation;
-    const Vec3f32 color_from_emission = rec.material->emitted(rec.u, rec.v, rec.p);
-
-    if (rec.material->scatter(r, rec, attenuation, scattered, local_rand_state)) {
-        return color_from_emission;
-    }
-
-    const Vec3f32 color_from_scatter = attenuation * color(local_rand_state, hittables, scattered, cam, depth - 1);
-
-    return color_from_emission + color_from_scatter;
 }
 
 __device__ double linear_to_gamma(double linear_component)
@@ -285,7 +281,8 @@ __global__ void create_world_simple_light(curandState* rand_state, Renderable* r
             20.0,
             float(nx) / float(ny),
             aperture,
-            dist_to_focus
+            dist_to_focus,
+            Vec3f32(0, 0, 0)
         );
     }
 }
@@ -405,7 +402,7 @@ int main() {
     checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(Camera)));
     Camera* h_camera = (Camera*) malloc(sizeof(Camera));
 
-    const int world_idx = 4;
+    const int world_idx = 0;
     switch (world_idx) {
     case 0: {
         create_world_random_spheres << <1, 1 >> > (d_rand_state, d_renderables, d_hittables, d_camera, nx, ny);
