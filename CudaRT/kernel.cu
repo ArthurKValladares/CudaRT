@@ -402,7 +402,7 @@ int main() {
     checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(Camera)));
     Camera* h_camera = (Camera*) malloc(sizeof(Camera));
 
-    const int world_idx = 0;
+    const int world_idx = 1;
     switch (world_idx) {
     case 0: {
         create_world_random_spheres << <1, 1 >> > (d_rand_state, d_renderables, d_hittables, d_camera, nx, ny);
