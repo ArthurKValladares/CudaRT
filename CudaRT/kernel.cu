@@ -19,8 +19,8 @@
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
 
-#define MAX_BOUNCE_DEPTH 5
-#define SAMPLES_PER_PIXEL 15
+#define MAX_BOUNCE_DEPTH 15
+#define SAMPLES_PER_PIXEL 25
 
 #define SPHERES_GRID_SIZE 5
 #define SPHERE_COUNT (SPHERES_GRID_SIZE * 2 * SPHERES_GRID_SIZE * 2) + 1 + 3
@@ -29,23 +29,31 @@
 #define CAMERA_DEFAULT_METERS_PER_SECOND 15.0
 #define CAMERA_SPEED_DELTA 0.5
 
-__device__ Vec3f32 color(LocalRandomState& local_rand_state, HittableList* hittables, const Ray& r, Camera* cam, int depth) {
-    HitRecord rec;
+#define WORLD_IDX 4
 
-    if (hittables->hit(r, 0.001f, FLT_MAX, rec)) {
-        Ray scattered;
-        Vec3f32 attenuation;
-        const Vec3f32 color_from_emission = rec.material->emitted(rec.u, rec.v, rec.p);
+__device__ Vec3f32 color(LocalRandomState& local_rand_state, HittableList* hittables, const Ray& r, Camera* cam, int max_bounces) {
+    Ray curr_ray = r;
+    Vec3f32 curr_color = Vec3f32(1, 1, 1);
 
-        if (depth > 0 && rec.material->scatter(r, rec, attenuation, scattered, local_rand_state)) {
-            return color_from_emission + attenuation * color(local_rand_state, hittables, scattered, cam, depth - 1);
+    for (int i = 0; i < max_bounces; ++i) {
+        HitRecord rec;
+
+        if (hittables->hit(curr_ray, 0.001f, FLT_MAX, rec)) {
+            Ray scattered;
+            Vec3f32 attenuation;
+            const Vec3f32 color_from_emission = rec.material->emitted(rec.u, rec.v, rec.p);
+
+            if (rec.material->scatter(r, rec, attenuation, scattered, local_rand_state)) {
+                curr_color = color_from_emission + curr_color * attenuation;
+                curr_ray = scattered;
+            }
+            else {
+                return curr_color * color_from_emission;
+            }
         }
         else {
-            return color_from_emission;
+            return curr_color * cam->background;
         }
-    }
-    else {
-        return cam->background;
     }
 }
 
@@ -402,8 +410,7 @@ int main() {
     checkCudaErrors(cudaMalloc((void**)&d_camera, sizeof(Camera)));
     Camera* h_camera = (Camera*) malloc(sizeof(Camera));
 
-    const int world_idx = 1;
-    switch (world_idx) {
+    switch (WORLD_IDX) {
     case 0: {
         create_world_random_spheres << <1, 1 >> > (d_rand_state, d_renderables, d_hittables, d_camera, nx, ny);
         break;
@@ -425,7 +432,7 @@ int main() {
         break;
     }
     default: {
-        printf("Invalid world id: %d!\n", world_idx);
+        printf("Invalid world id: %d!\n", WORLD_IDX);
         return 0;
     }
     }
