@@ -265,6 +265,9 @@ __global__ void create_world_simple_light(curandState* rand_state, Renderable* r
     if (threadIdx.x == 0 && blockIdx.x == 0) {
         LocalRandomState local_rand_state = LocalRandomState{ rand_state[0] };
 
+        // TODO: This could be done better with more than one single block, in a separate step
+        perlin->init(local_rand_state);
+
         int i = 0;
         renderables[i++] = Renderable::Sphere(Vec3f32(0, -1000, 0), 1000, Material::lambertian(
             Texture::Perlin(perlin, 4.0)
