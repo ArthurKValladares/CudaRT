@@ -269,6 +269,9 @@ __global__ void create_world_simple_light(curandState* rand_state, Renderable* r
         renderables[i++] = Renderable::Sphere(Vec3f32(0, -1000, 0), 1000, Material::lambertian(
             Texture::Perlin(perlin, 4.0)
         ));
+        renderables[i++] = Renderable::Sphere(Vec3f32(0, 7, 0), 2,
+            Material::diffuse_light(Vec3f32(4.0, 4.0, 4.0))
+        );
         renderables[i++] = Renderable::Sphere(Vec3f32(0, 2, 0), 2, Material::lambertian(
             Texture::Perlin(perlin, 4.0)
         ));
