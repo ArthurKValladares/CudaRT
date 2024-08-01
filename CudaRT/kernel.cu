@@ -19,8 +19,8 @@
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
 
-#define MAX_BOUNCE_DEPTH 50
-#define SAMPLES_PER_PIXEL 100
+#define MAX_BOUNCE_DEPTH 25
+#define SAMPLES_PER_PIXEL 50
 
 #define SPHERES_GRID_SIZE 5
 #define SPHERE_COUNT (SPHERES_GRID_SIZE * 2 * SPHERES_GRID_SIZE * 2) + 1 + 3
@@ -347,6 +347,8 @@ __global__ void create_world_cornell_box(Renderable* renderables, HittableList* 
             white
         );
 
+        create_box(Vec3f32(130, 0, 65), Vec3f32(295, 165, 230), renderables, i, white);
+        create_box(Vec3f32(265, 0, 295), Vec3f32(430, 330, 460), renderables, i, white);
 
         *hittables = HittableList(renderables, i);
 
