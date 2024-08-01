@@ -83,7 +83,7 @@ inline std::ostream& operator<<(std::ostream& os, const Vec3f32& t) {
 }
 
 __host__ __device__ inline void Vec3f32::make_unit_vector() {
-    float k = 1.0 / sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]);
+    const float k = 1.0 / sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]);
     e[0] *= k; e[1] *= k; e[2] *= k;
 }
 
@@ -162,7 +162,7 @@ __host__ __device__ inline Vec3f32& Vec3f32::operator*=(const float t) {
 }
 
 __host__ __device__ inline Vec3f32& Vec3f32::operator/=(const float t) {
-    float k = 1.0 / t;
+    const float k = 1.0 / t;
 
     e[0] *= k;
     e[1] *= k;

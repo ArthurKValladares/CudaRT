@@ -84,6 +84,7 @@ private:
 
 	Vec3f32 center;
 	float radius;
+    // TODO: Needs to be a pointer
     Material material;
     bool is_moving;
     Vec3f32 center_vec;

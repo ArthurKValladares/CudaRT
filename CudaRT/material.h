@@ -182,6 +182,9 @@ struct Material {
             return false;
         }
         }
+
+        assert(false);
+        return false;
     }
 
     __device__ Vec3f32 emitted(double u, double v, const Vec3f32& p) const {
@@ -199,6 +202,9 @@ struct Material {
             return data.payload.light.emitted(u, v, p);
         }
         }
+
+        assert(false);
+        return Vec3f32(0.0, 0.0, 0.0);
     }
 
 private:

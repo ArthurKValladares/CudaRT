@@ -19,8 +19,8 @@
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
 
-#define MAX_BOUNCE_DEPTH 15
-#define SAMPLES_PER_PIXEL 25
+#define MAX_BOUNCE_DEPTH 50
+#define SAMPLES_PER_PIXEL 100
 
 #define SPHERES_GRID_SIZE 5
 #define SPHERE_COUNT (SPHERES_GRID_SIZE * 2 * SPHERES_GRID_SIZE * 2) + 1 + 3
@@ -29,7 +29,7 @@
 #define CAMERA_DEFAULT_METERS_PER_SECOND 15.0
 #define CAMERA_SPEED_DELTA 0.5
 
-#define WORLD_IDX 4
+#define WORLD_IDX 5
 
 __device__ Vec3f32 color(LocalRandomState& local_rand_state, HittableList* hittables, const Ray& r, Camera* cam, int max_bounces) {
     Ray curr_ray = r;
@@ -174,9 +174,8 @@ __global__ void create_world_random_spheres(curandState* rand_state, Renderable*
     }
 }
 
-__global__ void create_world_earth(curandState* rand_state, Renderable* renderables, HittableList* hittables, Camera* d_camera, int nx, int ny, RtwImage* image) {
+__global__ void create_world_earth(Renderable* renderables, HittableList* hittables, Camera* d_camera, int nx, int ny, RtwImage* image) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
-        LocalRandomState local_rand_state = LocalRandomState{ rand_state[0] };
 
         int i = 0;
         renderables[i++] = Renderable::Sphere(Vec3f32(0, 0, 0), 2, Material::lambertian(
@@ -234,9 +233,8 @@ __global__ void create_world_perlin(curandState* rand_state, Renderable* rendera
     }
 }
 
-__global__ void create_world_quads(curandState* rand_state, Renderable* renderables, HittableList* hittables, Camera* d_camera, int nx, int ny) {
+__global__ void create_world_quads(Renderable* renderables, HittableList* hittables, Camera* d_camera, int nx, int ny) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
-        LocalRandomState local_rand_state = LocalRandomState{ rand_state[0] };
 
         int i = 0;
         renderables[i++] = Renderable::Quad(Vec3f32(-3, -2, 5), Vec3f32(0, 0, -4), Vec3f32(0, 4,  0), Material::lambertian(1.0, 0.2, 0.2));
@@ -288,6 +286,72 @@ __global__ void create_world_simple_light(curandState* rand_state, Renderable* r
 
         Vec3f32 origin(26, 3, 6);
         Vec3f32 look_at(0, 2, 0);
+        float dist_to_focus = (origin - look_at).length();
+        float aperture = 0.0;
+        *d_camera = Camera(
+            origin,
+            look_at,
+            Vec3f32(0, 1, 0),
+            20.0,
+            float(nx) / float(ny),
+            aperture,
+            dist_to_focus,
+            Vec3f32(0, 0, 0)
+        );
+    }
+}
+
+__device__ void create_box(const Vec3f32& a, const Vec3f32& b, Renderable* renderables, int& initial_idx, Material mat)
+{
+    // Construct the two opposite vertices with the minimum and maximum coordinates.
+    auto min = Vec3f32(std::fmin(a.x(), b.x()), std::fmin(a.y(), b.y()), std::fmin(a.z(), b.z()));
+    auto max = Vec3f32(std::fmax(a.x(), b.x()), std::fmax(a.y(), b.y()), std::fmax(a.z(), b.z()));
+
+    auto dx = Vec3f32(max.x() - min.x(), 0, 0);
+    auto dy = Vec3f32(0, max.y() - min.y(), 0);
+    auto dz = Vec3f32(0, 0, max.z() - min.z());
+
+    renderables[initial_idx++] = Renderable::Quad(Vec3f32(min.x(), min.y(), max.z()), dx, dy, mat);
+    renderables[initial_idx++] = Renderable::Quad(Vec3f32(max.x(), min.y(), max.z()), -dz, dy, mat);
+    renderables[initial_idx++] = Renderable::Quad(Vec3f32(max.x(), min.y(), min.z()), -dx, dy, mat);
+    renderables[initial_idx++] = Renderable::Quad(Vec3f32(min.x(), min.y(), min.z()), dz, dy, mat);
+    renderables[initial_idx++] = Renderable::Quad(Vec3f32(min.x(), max.y(), max.z()), dx, -dz, mat);
+    renderables[initial_idx++] = Renderable::Quad(Vec3f32(min.x(), min.y(), min.z()), dx, dz, mat);
+}
+
+__global__ void create_world_cornell_box(Renderable* renderables, HittableList* hittables, Camera* d_camera, int nx, int ny) {
+    if (threadIdx.x == 0 && blockIdx.x == 0) {
+        
+        Material red   = Material::lambertian(0.65, 0.05, 0.05);
+        Material white = Material::lambertian(0.73, 0.73, 0.73);
+        Material green = Material::lambertian(0.12, 0.45, 0.15);
+        Material light = Material::diffuse_light(Vec3f32(15, 15, 15));
+
+        int i = 0;
+        renderables[i++] = Renderable::Quad(Vec3f32(555, 0, 0), Vec3f32(0, 555, 0), Vec3f32(0, 0, 555), 
+            green
+        );
+        renderables[i++] = Renderable::Quad(Vec3f32(0, 0, 0), Vec3f32(0, 555, 0), Vec3f32(0, 0, 555),
+            red
+        );
+        renderables[i++] = Renderable::Quad(Vec3f32(343, 554, 332), Vec3f32(-130, 0, 0), Vec3f32(0, 0, -105),
+            light
+        );
+        renderables[i++] = Renderable::Quad(Vec3f32(0, 0, 0), Vec3f32(555, 0, 0), Vec3f32(0, 0, 555),
+            white
+        );
+        renderables[i++] = Renderable::Quad(Vec3f32(555, 555, 555), Vec3f32(-555, 0, 0), Vec3f32(0, 0, -555),
+            white
+        );
+        renderables[i++] = Renderable::Quad(Vec3f32(0, 0, 555), Vec3f32(555, 0, 0), Vec3f32(0, 555, 0),
+            white
+        );
+
+
+        *hittables = HittableList(renderables, i);
+
+        Vec3f32 origin(278, 278, -1600);
+        Vec3f32 look_at(278, 278, 0);
         float dist_to_focus = (origin - look_at).length();
         float aperture = 0.0;
         *d_camera = Camera(
@@ -424,7 +488,7 @@ int main() {
         break;
     }
     case 1: {
-        create_world_earth << <1, 1 >> > (d_rand_state, d_renderables, d_hittables, d_camera, nx, ny, d_image);
+        create_world_earth << <1, 1 >> > (d_renderables, d_hittables, d_camera, nx, ny, d_image);
         break;
     }
     case 2: {
@@ -432,11 +496,15 @@ int main() {
         break;
     }
     case 3: {
-        create_world_quads << <1, 1 >> > (d_rand_state, d_renderables, d_hittables, d_camera, nx, ny);
+        create_world_quads << <1, 1 >> > (d_renderables, d_hittables, d_camera, nx, ny);
         break;
     }
     case 4: {
         create_world_simple_light << <1, 1 >> > (d_rand_state, d_renderables, d_hittables, d_camera, nx, ny, d_perlin);
+        break;
+    }
+    case 5: {
+        create_world_cornell_box << <1, 1 >> > (d_renderables, d_hittables, d_camera, nx, ny);
         break;
     }
     default: {

@@ -80,6 +80,9 @@ struct Renderable {
 				return data.payload.quad.hit(r, ray_t, rec);
 			}
 		}
+
+		assert(false);
+		return false;
 	}
 
 	__device__ Renderable& operator=(const Renderable& renderable) {

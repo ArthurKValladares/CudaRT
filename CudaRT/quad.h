@@ -71,6 +71,7 @@ private:
     Vec3f32 Q;
     Vec3f32 u, v;
     Vec3f32 w;
+    // TODO: Needs to be a pointer
     Material mat;
     AABB bbox;
     Vec3f32 normal;

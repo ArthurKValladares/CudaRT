@@ -170,6 +170,9 @@ struct Texture {
 				return Vec3f32(0.5, 0.5, 0.5) * (1 + sin(payload.scale * p.z() + 10 * payload.perlin->turb(p, 7)));
 			}
 		}
+
+		assert(false);
+		return Vec3f32(1.0, 0.0, 1.0);
 	}
 
 	TextureData data;
