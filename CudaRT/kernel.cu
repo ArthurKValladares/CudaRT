@@ -55,6 +55,8 @@ __device__ Vec3f32 color(LocalRandomState& local_rand_state, HittableList* hitta
             return curr_color * cam->background;
         }
     }
+
+    return Vec3f32(0.0, 0.0, 0.0);
 }
 
 __device__ double linear_to_gamma(double linear_component)
