@@ -40,3 +40,11 @@ struct Interval {
 
 const Interval Interval::empty = Interval(+INFINITY, -INFINITY);
 const Interval Interval::universe = Interval(-INFINITY, +INFINITY);
+
+__device__ Interval operator+(const Interval& interval, float c) {
+	return Interval(interval.min + c, interval.max + c);
+}
+
+__device__ Interval operator+(float c, const Interval& interval) {
+	return c + interval;
+}
