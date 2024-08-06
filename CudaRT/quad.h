@@ -12,18 +12,6 @@ struct Quad {
         normal = unit_vector(n);
         D = dot(normal, Q);
         w = n / dot(n, n);
-
-        set_bounding_box();
-    }
-
-    __device__ void set_bounding_box() {
-        const AABB bbox_diagonal1 = AABB(Q, Q + u + v);
-        const AABB bbox_diagonal2 = AABB(Q + u, Q + v);
-        bbox = AABB(bbox_diagonal1, bbox_diagonal2);
-    }
-
-    __device__ AABB bounding_box() const {
-        return bbox; 
     }
 
     __device__ bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const {
@@ -73,7 +61,6 @@ private:
     Vec3f32 w;
     // TODO: Needs to be a pointer
     Material mat;
-    AABB bbox;
     Vec3f32 normal;
     float D;
 };
