@@ -2,6 +2,7 @@
 
 #include "sphere.h"
 #include "quad.h"
+#include "transforms.h"
 
 enum class RenderableType {
 	Sphere,
@@ -72,17 +73,26 @@ struct Renderable {
 	}
 
 	__device__ bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const {
+		const Ray offset_ray = Ray(r.origin() - translation.offset(), r.direction(), r.time());
+
+		bool hit = false;
 		switch (data.type) {
 			case RenderableType::Sphere : {
-				return data.payload.sphere.hit(r, ray_t, rec);
+				hit = data.payload.sphere.hit(offset_ray, ray_t, rec);
+				break;
 			}
 			case RenderableType::Quad: {
-				return data.payload.quad.hit(r, ray_t, rec);
+				hit = data.payload.quad.hit(offset_ray, ray_t, rec);
+				break;
+			}
+			default: {
+				assert(false);
+				return false;
 			}
 		}
+		rec.p += translation.offset();
 
-		assert(false);
-		return false;
+		return hit;
 	}
 
 	__device__ Renderable& operator=(const Renderable& renderable) {
@@ -91,6 +101,17 @@ struct Renderable {
 		return *this;
 	}
 
+	__device__ void set_rotation(float angle) {
+		rotation = Rotation(angle);
+	}
+
+	__device__ void set_translation(Vec3f32 offset) {
+		translation = Translation(offset);
+	}
+
 private:
 	RenderableData data;
+
+	Translation translation;
+	Rotation rotation;
 };

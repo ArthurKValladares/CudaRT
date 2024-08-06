@@ -301,7 +301,8 @@ __global__ void create_world_simple_light(curandState* rand_state, Renderable* r
     }
 }
 
-__device__ void create_box(const Vec3f32& a, const Vec3f32& b, Renderable* renderables, int& initial_idx, Material mat)
+__device__ void create_box(const Vec3f32& a, const Vec3f32& b, Renderable* renderables, int& initial_idx, Material mat, 
+    Vec3f32 translation = Vec3f32(0, 0, 0), float rotation = 0)
 {
     // Construct the two opposite vertices with the minimum and maximum coordinates.
     auto min = Vec3f32(std::fmin(a.x(), b.x()), std::fmin(a.y(), b.y()), std::fmin(a.z(), b.z()));
@@ -312,11 +313,28 @@ __device__ void create_box(const Vec3f32& a, const Vec3f32& b, Renderable* rende
     auto dz = Vec3f32(0, 0, max.z() - min.z());
 
     renderables[initial_idx++] = Renderable::Quad(Vec3f32(min.x(), min.y(), max.z()), dx, dy, mat);
+    renderables[initial_idx - 1].set_translation(translation);
+    renderables[initial_idx - 1].set_rotation(rotation);
+
     renderables[initial_idx++] = Renderable::Quad(Vec3f32(max.x(), min.y(), max.z()), -dz, dy, mat);
+    renderables[initial_idx - 1].set_translation(translation);
+    renderables[initial_idx - 1].set_rotation(rotation);
+
     renderables[initial_idx++] = Renderable::Quad(Vec3f32(max.x(), min.y(), min.z()), -dx, dy, mat);
+    renderables[initial_idx - 1].set_translation(translation);
+    renderables[initial_idx - 1].set_rotation(rotation);
+
     renderables[initial_idx++] = Renderable::Quad(Vec3f32(min.x(), min.y(), min.z()), dz, dy, mat);
+    renderables[initial_idx - 1].set_translation(translation);
+    renderables[initial_idx - 1].set_rotation(rotation);
+
     renderables[initial_idx++] = Renderable::Quad(Vec3f32(min.x(), max.y(), max.z()), dx, -dz, mat);
+    renderables[initial_idx - 1].set_translation(translation);
+    renderables[initial_idx - 1].set_rotation(rotation);
+
     renderables[initial_idx++] = Renderable::Quad(Vec3f32(min.x(), min.y(), min.z()), dx, dz, mat);
+    renderables[initial_idx - 1].set_translation(translation);
+    renderables[initial_idx - 1].set_rotation(rotation);
 }
 
 __global__ void create_world_cornell_box(Renderable* renderables, HittableList* hittables, Camera* d_camera, int nx, int ny) {
@@ -328,6 +346,7 @@ __global__ void create_world_cornell_box(Renderable* renderables, HittableList* 
         Material light = Material::diffuse_light(Vec3f32(15, 15, 15));
 
         int i = 0;
+
         renderables[i++] = Renderable::Quad(Vec3f32(555, 0, 0), Vec3f32(0, 555, 0), Vec3f32(0, 0, 555), 
             green
         );
@@ -347,8 +366,10 @@ __global__ void create_world_cornell_box(Renderable* renderables, HittableList* 
             white
         );
 
-        create_box(Vec3f32(130, 0, 65), Vec3f32(295, 165, 230), renderables, i, white);
-        create_box(Vec3f32(265, 0, 295), Vec3f32(430, 330, 460), renderables, i, white);
+        create_box(Vec3f32(0, 0, 0), Vec3f32(165, 330, 165), renderables, i, white, 
+            Vec3f32(265, 0, 295));
+        create_box(Vec3f32(0, 0, 0), Vec3f32(165, 165, 165), renderables, i, white,
+            Vec3f32(130, 0, 65));
 
         *hittables = HittableList(renderables, i);
 
@@ -363,8 +384,7 @@ __global__ void create_world_cornell_box(Renderable* renderables, HittableList* 
             20.0,
             float(nx) / float(ny),
             aperture,
-            dist_to_focus,
-            Vec3f32(0, 0, 0)
+            dist_to_focus
         );
     }
 }
