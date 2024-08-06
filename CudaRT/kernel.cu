@@ -19,8 +19,8 @@
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
 
-#define MAX_BOUNCE_DEPTH 25
-#define SAMPLES_PER_PIXEL 50
+#define MAX_BOUNCE_DEPTH 50
+#define SAMPLES_PER_PIXEL 500
 
 #define SPHERES_GRID_SIZE 5
 #define SPHERE_COUNT (SPHERES_GRID_SIZE * 2 * SPHERES_GRID_SIZE * 2) + 1 + 3
@@ -366,10 +366,12 @@ __global__ void create_world_cornell_box(Renderable* renderables, HittableList* 
             white
         );
 
+        /*
         create_box(Vec3f32(0, 0, 0), Vec3f32(165, 330, 165), renderables, i, white, 
-            Vec3f32(265, 0, 295));
+            Vec3f32(265, 0, 295), 15);
         create_box(Vec3f32(0, 0, 0), Vec3f32(165, 165, 165), renderables, i, white,
-            Vec3f32(130, 0, 65));
+            Vec3f32(130, 0, 65), -18);
+        */
 
         *hittables = HittableList(renderables, i);
 
@@ -384,7 +386,8 @@ __global__ void create_world_cornell_box(Renderable* renderables, HittableList* 
             20.0,
             float(nx) / float(ny),
             aperture,
-            dist_to_focus
+            dist_to_focus,
+            Vec3f32(0, 0, 0)
         );
     }
 }

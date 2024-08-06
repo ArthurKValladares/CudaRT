@@ -73,16 +73,25 @@ struct Renderable {
 	}
 
 	__device__ bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const {
-		const Ray offset_ray = Ray(r.origin() - translation.offset(), r.direction(), r.time());
+		Vec3f32 origin = r.origin();
+		//origin[0] = rotation.m_cos_theta * r.origin()[0] - rotation.m_sin_theta * r.origin()[2];
+		//origin[2] = rotation.m_sin_theta * r.origin()[0] + rotation.m_cos_theta * r.origin()[2];
+		//origin -= translation.m_offset;
+
+		Vec3f32 direction = r.direction();
+		//direction[0] = rotation.m_cos_theta * r.direction()[0] - rotation.m_sin_theta * r.direction()[2];
+		//direction[2] = rotation.m_sin_theta * r.direction()[0] + rotation.m_cos_theta * r.direction()[2];
+
+		const Ray transformed_ray = Ray(origin, direction, r.time());
 
 		bool hit = false;
 		switch (data.type) {
 			case RenderableType::Sphere : {
-				hit = data.payload.sphere.hit(offset_ray, ray_t, rec);
+				hit = data.payload.sphere.hit(transformed_ray, ray_t, rec);
 				break;
 			}
 			case RenderableType::Quad: {
-				hit = data.payload.quad.hit(offset_ray, ray_t, rec);
+				hit = data.payload.quad.hit(transformed_ray, ray_t, rec);
 				break;
 			}
 			default: {
@@ -90,7 +99,18 @@ struct Renderable {
 				return false;
 			}
 		}
-		rec.p += translation.offset();
+
+		Vec3f32 p = rec.p;
+		//p[0] = rotation.m_cos_theta * rec.p[0] + rotation.m_sin_theta * rec.p[2];
+		//p[2] = -rotation.m_sin_theta * rec.p[0] + rotation.m_cos_theta * rec.p[2];
+		//p += translation.m_offset;
+
+		Vec3f32 normal = rec.normal;
+		//normal[0] = rotation.m_cos_theta * rec.normal[0] + rotation.m_sin_theta * rec.normal[2];
+		//normal[2] = -rotation.m_sin_theta * rec.normal[0] + rotation.m_cos_theta * rec.normal[2];
+
+		rec.p += p;
+		rec.normal = normal;
 
 		return hit;
 	}

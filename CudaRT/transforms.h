@@ -12,11 +12,6 @@ struct Translation {
     __device__ Translation() : Translation(Vec3f32(0.0, 0.0, 0.0)) {
     }
 
-    __device__ Vec3f32 offset() const {
-        return m_offset;
-    }
-
-private:
 	Vec3f32 m_offset;
 };
 
@@ -30,7 +25,6 @@ struct Rotation {
 
     __device__ Rotation() : Rotation(0.0) {}
 
-private:
 	float m_sin_theta;
 	float m_cos_theta;
 };

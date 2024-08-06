@@ -19,7 +19,7 @@ __host__ __device__ int clamp(int x, int low, int high) {
 	return high - 1;
 }
 
-__host__ __device__ inline double degrees_to_radians(double degrees) {
+__host__ __device__ inline float degrees_to_radians(float degrees) {
 	return degrees * M_PI / 180.0;
 }
 
