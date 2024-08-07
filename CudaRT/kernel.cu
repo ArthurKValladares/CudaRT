@@ -384,8 +384,7 @@ __global__ void create_world_cornell_box(Renderable* renderables, HittableList* 
             20.0,
             float(nx) / float(ny),
             aperture,
-            dist_to_focus,
-            Vec3f32(0, 0, 0)
+            dist_to_focus
         );
     }
 }

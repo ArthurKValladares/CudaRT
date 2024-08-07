@@ -74,12 +74,12 @@ struct Renderable {
 
 	__device__ bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const {
 
-		Vec3f32 origin = r.origin();
+		Vec3f32 translated_origin = r.origin() - translation.m_offset;
+		Vec3f32 origin = translated_origin;
 		if (rotation.m_angle != 0.0) {
-			origin[0] = rotation.m_cos_theta * r.origin()[0] - rotation.m_sin_theta * r.origin()[2];
-			origin[2] = rotation.m_sin_theta * r.origin()[0] + rotation.m_cos_theta * r.origin()[2];
+			origin[0] = rotation.m_cos_theta * translated_origin[0] - rotation.m_sin_theta * translated_origin[2];
+			origin[2] = rotation.m_sin_theta * translated_origin[0] + rotation.m_cos_theta * translated_origin[2];
 		}
-		//origin -= translation.m_offset;
 
 		Vec3f32 direction = r.direction();
 		if (rotation.m_angle != 0.0) {
