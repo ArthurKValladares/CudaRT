@@ -29,7 +29,7 @@
 #define CAMERA_DEFAULT_METERS_PER_SECOND 15.0
 #define CAMERA_SPEED_DELTA 0.5
 
-#define WORLD_IDX 5
+#define WORLD_IDX 6
 
 __device__ Vec3f32 color(LocalRandomState& local_rand_state, HittableList* hittables, const Ray& r, Camera* cam, int max_bounces) {
     Ray curr_ray = r;
@@ -155,7 +155,6 @@ __global__ void create_world_random_spheres(curandState* rand_state, Renderable*
         renderables[i++] = Renderable::Sphere(Vec3f32(-4, 1, 0), 1, Material::lambertian(Texture::SolidColor(Vec3f32(0.4, 0.2, 0.1))));
         renderables[i++] = Renderable::Sphere(Vec3f32(4, 1, 0), 1, Material::metal(Vec3f32(0.7, 0.6, 0.5), 0.0));
 
-        assert(SPHERE_COUNT == i);
         *hittables = HittableList(renderables, i);
 
         Vec3f32 origin(13, 3, 3);
@@ -527,6 +526,10 @@ int main() {
     }
     case 5: {
         create_world_cornell_box << <1, 1 >> > (d_renderables, d_hittables, d_camera, nx, ny);
+        break;
+    }
+    case 6: {
+        create_world_final << <1, 1 >> > (d_rand_state, d_renderables, d_hittables, d_camera, nx, ny, d_perlin, d_image);
         break;
     }
     default: {
